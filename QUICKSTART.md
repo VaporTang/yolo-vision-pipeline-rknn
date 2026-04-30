@@ -1,6 +1,6 @@
 # YOLO 视觉流水线 - 5分钟快速入门
 
-这是上手该流水线最快的方式。
+以下是上手该流水线最快的方式。
 
 ## 前置条件
 
@@ -9,7 +9,25 @@
 - NVIDIA GPU（可选，但强烈建议）
 - Git
 
-## 第一步：克隆与环境配置（5分钟）
+## 第一步：设置项目路径（可选，推荐）
+
+编辑 `configs/paths.yaml` 设置你的项目根目录（或者让它自动检测）：
+
+```yaml
+# 自动检测（推荐）
+project_root: null
+
+# 或者手动指定 Windows 路径：
+# project_root: C:\Users\YourUsername\Documents\GitHub\yolo-vision-pipeline-rknn
+```
+
+查看当前路径配置：
+
+```powershell
+python src/train.py --show-paths
+```
+
+## 第二步：克隆与环境配置（5分钟）
 
 ```powershell
 # 以管理员身份打开 PowerShell
@@ -22,7 +40,7 @@ cd path/to/yolo-vision-pipeline-rknn
 conda activate rknn-yolov8
 ```
 
-## 第二步：准备数据集（时间不定）
+## 第三步：准备数据集（时间不定）
 
 你的数据集应当符合 YOLO 格式：
 
@@ -71,7 +89,7 @@ python src/export/1_pt_to_onnx.py
 
 ## 第五步：转换为 RKNN 格式（在 Ubuntu/WSL 环境下，10-20分钟）
 
-### 仅限首次运行：
+### 仅限首次运行
 
 ```bash
 cd /mnt/c/Users/你的用户名/path/to/yolo-vision-pipeline-rknn
@@ -79,7 +97,7 @@ bash setup_wsl.sh
 source rknn-env/bin/activate
 ```
 
-### 随后运行：
+### 随后运行
 
 ```bash
 # 从 Windows 环境中复制 ONNX 文件
@@ -156,6 +174,7 @@ python src/export/2_onnx_to_rknn.py
 ---
 
 **从零开始到生成 .rknn 文件的总耗时大约为 2-8 小时，具体取决于：**
+
 - 数据集的大小
 - 模型的复杂度
 - 硬件设备的运行速度

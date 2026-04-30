@@ -24,6 +24,9 @@ import sys
 from pathlib import Path
 import yaml
 
+# Add src directory to path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
 try:
     from ultralytics import YOLO
 except ImportError:
@@ -34,6 +37,11 @@ except ImportError:
     print("  pip install -e .")
     print("  pip install onnx onnxsim")
     sys.exit(1)
+
+try:
+    from utils.path_manager import paths
+except ImportError:
+    paths = None  # Optional path manager
 
 
 def load_config(config_path: str) -> dict:
@@ -79,8 +87,18 @@ def main():
         default=None,
         help="Simplify ONNX model using onnxsim"
     )
+    parser.add_argument(
+        "--show-paths",
+        action="store_true",
+        help="Show path configuration and exit"
+    )
     
     args = parser.parse_args()
+    
+    # Show paths configuration if requested
+    if args.show_paths and paths:
+        paths.print_config()
+        return 0
     
     # Load configuration
     config_path = Path(args.config)

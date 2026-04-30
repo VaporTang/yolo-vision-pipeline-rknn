@@ -8,7 +8,7 @@
 # Windows example: C:\Users\YourUsername\Documents\GitHub\yolo-vision-pipeline-rknn
 # Linux/WSL example: /home/username/path/to/yolo-vision-pipeline-rknn
 # Or leave as null to auto-detect from current working directory
-project_root: null  # Auto-detect (set to absolute path if needed)
+project_root: null # Auto-detect (set to absolute path if needed)
 
 # ============================================================================
 # Dataset Paths
@@ -16,18 +16,18 @@ project_root: null  # Auto-detect (set to absolute path if needed)
 dataset:
   # Root dataset directory
   root: datasets/yolo_dataset
-  
+
   # Training data
   train_images: datasets/yolo_dataset/train/images
   train_labels: datasets/yolo_dataset/train/labels
-  
+
   # Validation data
   val_images: datasets/yolo_dataset/valid/images
   val_labels: datasets/yolo_dataset/valid/labels
-  
+
   # Raw/source data
   raw: datasets/raw
-  
+
   # Calibration images for RKNN quantization
   calibration_images: datasets/calibration/images
   calibration_list: datasets/calibration/dataset.txt
@@ -38,19 +38,19 @@ dataset:
 models:
   # Directory for all models
   root: models
-  
+
   # Pretrained model (for download if not exists)
   pretrained_model: models/yolov8l.pt
-  
+
   # Trained model output
   best_pt: models/best.pt
-  
+
   # Exported ONNX model
   best_onnx: models/best.onnx
-  
+
   # Final RKNN model
   best_rknn: models/best.rknn
-  
+
   # Training results directory
   training_results: models/training_results
 
@@ -63,7 +63,7 @@ configs:
   train: configs/train_config.yaml
   export: configs/export_config.yaml
   rknn: configs/rknn_config.yaml
-  paths: configs/paths.yaml  # This file
+  paths: configs/paths.yaml # This file
 
 # ============================================================================
 # Source Code Paths
@@ -94,9 +94,9 @@ docs:
 external:
   # Rockchip YOLOv8 (for ONNX export on Windows)
   ultralytics_yolov8: third_party/ultralytics_yolov8
-  
+
   # RKNN Toolkit2 (for RKNN conversion on Ubuntu/WSL)
-  rknn_toolkit2: ~/rknn-toolkit2  # Usually in home directory
+  rknn_toolkit2: ~/rknn-toolkit2 # Usually in home directory
 
 # ============================================================================
 # Temporary/Cache Paths
@@ -104,10 +104,10 @@ external:
 cache:
   # Temporary files during processing
   temp: .cache
-  
+
   # Python cache
   pycache: __pycache__
-  
+
   # Model cache
   model_cache: models/.cache
 

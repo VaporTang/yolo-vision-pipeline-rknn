@@ -23,6 +23,11 @@ from utils.dataset_utils import (
     prepare_calibration_dataset
 )
 
+try:
+    from utils.path_manager import paths
+except ImportError:
+    paths = None  # Optional path manager
+
 
 def check_overlaps():
     """Check for overlapping bounding boxes in annotations."""
@@ -74,9 +79,20 @@ if __name__ == "__main__":
         print("  split_dataset       - Split into train/validation")
         print("  filter_classes      - Remove specified classes")
         print("  prepare_calibration - Prepare calibration dataset")
+        print("  show-paths          - Show path configuration")
         sys.exit(0)
     
     command = sys.argv[1]
+    
+    # Handle --show-paths at any position
+    if command == "show-paths" or "--show-paths" in sys.argv:
+        if paths:
+            paths.print_config()
+            sys.exit(0)
+        else:
+            print("Path manager not available")
+            sys.exit(1)
+    
     sys.argv = [sys.argv[0]] + sys.argv[2:]  # Remove command from args
     
     if command == "check_overlaps":

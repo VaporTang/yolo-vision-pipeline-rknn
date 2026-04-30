@@ -145,6 +145,61 @@ python src/export/2_onnx_to_rknn.py --config configs/rknn_config.yaml
 
 Output: `models/best.rknn`
 
+## ⚙️ Path Configuration System
+
+All paths in the pipeline are centralized in `configs/paths.yaml`. This eliminates the need to manually copy paths between scripts.
+
+### Quick Setup
+
+1. **Verify paths** (one-time):
+
+  ```powershell
+  python verify_paths.py
+  ```
+
+1. **View current configuration**:
+
+  ```powershell
+  python src/train.py --show-paths
+  ```
+
+1. **Customize paths** (if needed):
+  Edit `configs/paths.yaml`:
+
+  ```yaml
+  project_root: null  # auto-detect, or set absolute path
+   
+  dataset:
+    root: datasets/yolo_dataset
+    train_images: datasets/yolo_dataset/train/images
+    # ... more paths
+   
+  models:
+    best_pt: models/best.pt
+    best_onnx: models/best.onnx
+    best_rknn: models/best.rknn
+  ```
+
+### Using PathManager in Python
+
+```python
+from src.utils.path_manager import paths
+
+# Get a path
+model_path = paths.get("models.best_pt")
+
+# Get as string
+model_str = paths.get_str("models.best_onnx")
+
+# Ensure directory exists
+paths.ensure_dir("dataset.calibration_images")
+
+# Get all paths in a section
+all_models = paths.get_all("models")
+```
+
+📖 **Full Guide**: See [PATH_SETUP.md](PATH_SETUP.md) or [docs/path_configuration.md](docs/path_configuration.md)
+
 ## Configuration Files
 
 ### `configs/data.yaml` - Dataset Configuration

@@ -13,12 +13,20 @@ import sys
 from pathlib import Path
 import yaml
 
+# Add src directory to path for imports
+sys.path.insert(0, str(Path(__file__).parent))
+
 try:
     from ultralytics import YOLO
 except ImportError:
     print("ERROR: ultralytics not installed. Install with:")
     print("  pip install ultralytics")
     sys.exit(1)
+
+try:
+    from utils.path_manager import paths
+except ImportError:
+    paths = None  # Optional path manager
 
 
 def load_config(config_path: str) -> dict:
@@ -41,8 +49,18 @@ def main():
     parser.add_argument("--batch", type=int, help="Override batch size")
     parser.add_argument("--device", type=int, help="Override GPU device")
     parser.add_argument("--imgsz", type=int, help="Override image size")
+    parser.add_argument(
+        "--show-paths",
+        action="store_true",
+        help="Show path configuration and exit"
+    )
     
     args = parser.parse_args()
+    
+    # Show paths configuration if requested
+    if args.show_paths and paths:
+        paths.print_config()
+        return 0
     
     # Load configuration
     config_path = Path(args.config)
