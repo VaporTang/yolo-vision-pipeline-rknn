@@ -1,0 +1,33 @@
+# RKNN Conversion Configuration
+# Configuration for converting ONNX models to RKNN format for Rockchip NPU
+
+rknn_conversion:
+  # Input/Output paths
+  input_onnx: models/best.onnx
+  output_rknn: models/best.rknn
+  quantization_dataset: datasets/calibration/dataset.txt
+
+  # Quantization settings
+  do_quantization: true
+  quantization_type: INT8 # INT8 quantization
+
+  # Normalization (for YOLO)
+  mean_values: [ [ 0, 0, 0 ] ]
+  std_values: [ [ 255, 255, 255 ] ]
+
+  # Platform target (use one of: rk3588, rk3588s, rk3568, rk3566, rk3562)
+  target_platform: rk3588
+
+  # Optimization
+  optimization_level: 3 # 0-3, higher is more aggressive
+
+  # Verbosity
+  verbose: true
+
+# Calibration dataset preparation:
+# You need to prepare a dataset.txt file with 20-30 representative images
+# Format: one image name per line
+# Example:
+#   img1.jpg
+#   img2.jpg
+#   img3.jpg

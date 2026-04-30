@@ -1,0 +1,10 @@
+# RKNN Toolkit2 requirements for Ubuntu/WSL
+# These should be installed after setting up the virtual environment
+
+rknn-toolkit2==2.3.2
+onnx==1.14.1
+numpy==1.24.3
+pyyaml==6.0
+pillow==10.0.0
+opencv-python==4.8.1
+tqdm==4.66.1

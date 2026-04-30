@@ -1,0 +1,25 @@
+# ONNX Export Configuration
+# Configuration for exporting YOLOv8 models to ONNX format
+
+onnx_export:
+  # Input model path (relative to project root)
+  input_model: models/best.pt
+
+  # Output ONNX model path
+  output_onnx: models/best.onnx
+
+  # Model settings
+  imgsz: 640 # Input image size
+
+  # ONNX export options
+  opset_version: 13 # ONNX opset version
+  simplify: true # Simplify ONNX model using onnxsim
+
+  # Format options
+  format: onnx
+
+  # Hardware target
+  device: 0 # GPU device (0 for first GPU, -1 for CPU)
+
+# Note: This script uses the Rockchip-customized ultralytics_yolov8
+# which strips unsupported post-processing operations for NPU

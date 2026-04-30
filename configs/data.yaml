@@ -1,0 +1,23 @@
+# Dataset Configuration
+# Paths should be relative to the project root
+# Modify these paths based on your dataset location
+
+path: datasets/yolo_dataset # Dataset root (images and labels dirs)
+train: datasets/yolo_dataset/train/images # Training images
+val: datasets/yolo_dataset/valid/images # Validation images
+test: # test images (optional)
+
+# Number of classes
+nc: 6
+
+# Class names
+names:
+  0: yellow_ball
+  1: blue_ball
+  2: red_ball
+  3: black_ball
+  4: blue_placement_zone
+  5: red_placement_zone
+
+# Optional: class indices for download (used by Ultralytics)
+download: null
