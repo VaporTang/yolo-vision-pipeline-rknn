@@ -38,6 +38,7 @@ except ImportError:
     print("     python3 -m venv rknn-env")
     print("     source rknn-env/bin/activate")
     print("  3. Install RKNN Toolkit2:")
+    print("     mkdir -p 3rdparty && cd 3rdparty")
     print("     git clone https://github.com/airockchip/rknn-toolkit2.git")
     print("     cd rknn-toolkit2/rknn-toolkit2/packages/x86_64")
     print("     pip install -r requirements_cp310-2.3.2.txt")

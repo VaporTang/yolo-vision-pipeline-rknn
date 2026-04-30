@@ -495,8 +495,8 @@ $env:PYTHONPATH = ".\"
 
 **"ultralytics not found":**
 
-- Ensure you cloned `ultralytics_yolov8` in `third_party/`
-- Run: `pip install -e third_party/ultralytics_yolov8`
+- Ensure you cloned `ultralytics_yolov8` in `3rdparty/`
+- Run: `pip install -e 3rdparty/ultralytics_yolov8`
 
 ### Conversion Issues
 

@@ -65,18 +65,18 @@ Write-Host ""
 # Clone and install Rockchip YOLO
 Write-Host "Setting up Rockchip-customized YOLOv8..." -ForegroundColor Cyan
 
-if (-not (Test-Path "third_party/ultralytics_yolov8" -PathType Container)) {
+if (-not (Test-Path "3rdparty/ultralytics_yolov8" -PathType Container)) {
     Write-Host "  Cloning ultralytics_yolov8..." -ForegroundColor Cyan
-    mkdir -p third_party
-    cd third_party
+    New-Item -ItemType Directory -Force -Path "3rdparty" | Out-Null
+    Set-Location "3rdparty"
     git clone https://github.com/airockchip/ultralytics_yolov8.git
-    cd ..
+    Set-Location ..
 }
 else {
     Write-Host "  ultralytics_yolov8 already exists" -ForegroundColor Yellow
 }
 
-cd third_party/ultralytics_yolov8
+Set-Location "3rdparty/ultralytics_yolov8"
 Write-Host "  Installing as development package..." -ForegroundColor Cyan
 pip install -e .
 

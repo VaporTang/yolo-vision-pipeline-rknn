@@ -37,9 +37,10 @@ source $ENV_NAME/bin/activate
 echo "✅ Virtual environment created and activated"
 echo ""
 
-# Navigate to Ubuntu home directory
+# Prepare third-party directory
 echo "Preparing to download RKNN Toolkit2..."
-cd ~
+mkdir -p 3rdparty
+cd 3rdparty
 
 if [ ! -d "rknn-toolkit2" ]; then
     echo "Cloning RKNN Toolkit2..."
@@ -53,7 +54,7 @@ echo ""
 
 # Install RKNN dependencies
 echo "Installing RKNN Toolkit2 dependencies..."
-cd ~/rknn-toolkit2/rknn-toolkit2/packages/x86_64
+cd rknn-toolkit2/rknn-toolkit2/packages/x86_64
 
 if [ -f "requirements_cp310-2.3.2.txt" ]; then
     pip install -r requirements_cp310-2.3.2.txt

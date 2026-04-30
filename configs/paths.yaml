@@ -93,10 +93,10 @@ docs:
 # Set these to the actual paths on your system
 external:
   # Rockchip YOLOv8 (for ONNX export on Windows)
-  ultralytics_yolov8: third_party/ultralytics_yolov8
+  ultralytics_yolov8: 3rdparty/ultralytics_yolov8
 
   # RKNN Toolkit2 (for RKNN conversion on Ubuntu/WSL)
-  rknn_toolkit2: ~/rknn-toolkit2 # Usually in home directory
+  rknn_toolkit2: 3rdparty/rknn-toolkit2
 
 # ============================================================================
 # Temporary/Cache Paths
