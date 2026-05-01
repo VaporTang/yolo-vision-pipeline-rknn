@@ -110,7 +110,7 @@ See `datasets/videos/README.md` for detailed options.
 
 #### 数据清洗（可选但推荐）
 
-为了减少训练集中的冗余样本，建议在整理 `datasets/yolo_dataset` 前先对 `datasets/raw` 进行去重与清洗。仓库包含去重工具：`datasets/scripts/deduplicate.py`，并在 `datasets/cleaning/README.md` 中给出使用说明与示例命令。
+为了减少训练集中的冗余样本，建议在整理 `datasets/yolo_dataset` 前先对 `datasets/raw` 进行去重与清洗。仓库包含去重工具：`datasets/scripts/deduplicate.py`。
 
 示例命令（先用 `--dry-run` 预览）：
 
