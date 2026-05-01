@@ -26,8 +26,21 @@ yolo-vision-pipeline-rknn/
 │   └── rknn_config.yaml          # RKNN conversion settings
 ├── datasets/                     # Dataset directory
 │   ├── raw/                      # Original dataset files
+│   │   ├── images/               # Original images (organized by batch)
+│   │   └── labels/               # Corresponding YOLO format labels
+│   ├── videos/                   # Video source files (optional)
+│   ├── cleaning/                 # Data deduplication & cleaning
+│   │   ├── README.md             # Deduplication guide
+│   │   └── duplicates/           # Detected duplicate images
 │   ├── calibration/              # Quantization calibration images
+│   ├── yolo_dataset/             # Final organized YOLO dataset
+│   │   ├── train/
+│   │   └── valid/
 │   └── scripts/                  # Dataset processing utilities
+│       ├── deduplicate.py        # Image deduplication script
+│       ├── extract_frames.py     # Video frame extraction
+│       ├── download_hf_data.py
+│       └── split_dataset.py
 ├── models/                       # Trained and converted models
 │   └── training_results/         # Training outputs
 ├── src/                          # Source code
@@ -64,7 +77,24 @@ conda activate rknn-yolov8-train
 # - rknn-yolov8-export for Rockchip ONNX export
 ```
 
-#### 2. Prepare Your Dataset
+#### 2. Extract Frames from Videos (Optional)
+
+If you have recorded video files, use the frame extraction tool to automatically extract frames:
+
+```powershell
+# First install opencv-python
+pip install opencv-python
+
+# Single video extraction (every 30 frames)
+python datasets/scripts/extract_frames.py --video datasets/videos/batch1/recording.mp4 --output datasets/raw/images/batch1 --every 30
+
+# Or batch extraction from directory
+python datasets/scripts/extract_frames.py --video-dir datasets/videos --output datasets/raw/images --batch-prefix batch1 --every 15
+```
+
+See `datasets/videos/README.md` for detailed options.
+
+#### 3. Prepare Your Dataset
 
 ```powershell
 # Update configs/data.yaml with your dataset paths
@@ -80,12 +110,12 @@ conda activate rknn-yolov8-train
 
 #### 数据清洗（可选但推荐）
 
-为了减少训练集中的冗余样本，建议在整理 `datasets/yolo_dataset` 前先对 `datasets/raw` 进行去重与清洗。仓库包含去重工具：`datasets/cleaning/deduplicate.py`，并在 `datasets/cleaning/README.md` 中给出使用说明与示例命令。
+为了减少训练集中的冗余样本，建议在整理 `datasets/yolo_dataset` 前先对 `datasets/raw` 进行去重与清洗。仓库包含去重工具：`datasets/scripts/deduplicate.py`，并在 `datasets/cleaning/README.md` 中给出使用说明与示例命令。
 
 示例命令（先用 `--dry-run` 预览）：
 
 ```bash
-python datasets/cleaning/deduplicate.py --src datasets/raw --dst datasets/cleaning/duplicates --threshold 5 --dry-run
+python datasets/scripts/deduplicate.py --src datasets/raw --images-subdir images --labels-subdir labels --dst datasets/cleaning/duplicates --threshold 5 --dry-run
 ```
 
 确认后可以使用 `--move` 将重复项移动到目标目录以便人工复核。

@@ -71,6 +71,34 @@ conda activate rknn-yolov8-train
 - `rknn-yolov8-train`：官方 Ultralytics 源码安装，用于训练
 - `rknn-yolov8-export`：Rockchip Ultralytics 源码安装，用于 ONNX 导出
 
+## 第二步补充：从视频抽帧（可选）
+
+如果你有录制的视频文件，可以使用抽帧工具从视频中自动提取帧图像。
+
+首先安装依赖：
+
+```powershell
+pip install opencv-python
+```
+
+然后将视频放入 `datasets/videos/batch{N}/` 目录，使用以下命令抽帧：
+
+```powershell
+# 单个视频抽帧（每隔 30 帧取一帧）
+python datasets/scripts/extract_frames.py --video datasets/videos/batch1/recording.mp4 --output datasets/raw/images/batch1 --every 30
+
+# 或者批量抽帧（按目录）
+python datasets/scripts/extract_frames.py --video-dir datasets/videos --output datasets/raw/images --batch-prefix batch1 --every 15
+```
+
+参数说明：
+
+- `--every N`: 每隔 N 帧抽取 1 帧。若视频是 30fps，`--every 30` 表示每秒 1 帧；`--every 15` 表示每秒 2 帧。
+- `--batch-prefix`: 输出文件名前缀（可选）。
+- `--pattern`: 查找视频的文件模式，默认 `*.mp4`，也支持 `*.avi` 等。
+
+详见 `datasets/videos/README.md`。
+
 ## 第三步：准备数据集（时间不定）
 
 你的数据集应当符合 YOLO 格式：
@@ -89,14 +117,14 @@ datasets/yolo_dataset/
 
 在将图片放入 `datasets/yolo_dataset` 前，建议先对原始数据进行清洗，去除高度重复或近似重复的图片以减少训练冗余。
 
-仓库提供了一个去重脚本：`datasets/cleaning/deduplicate.py`，并附有使用说明 `datasets/cleaning/README.md`。
+仓库提供了一个去重脚本：`datasets/scripts/deduplicate.py`，并附有使用说明 `datasets/cleaning/README.md`。
 
 示例（先预览，再移动重复项）：
 
 ```powershell
-python datasets/cleaning/deduplicate.py --src datasets/raw --dst datasets/cleaning/duplicates --threshold 5 --dry-run
+python datasets/scripts/deduplicate.py --src datasets/raw --dst datasets/cleaning/duplicates --threshold 5 --dry-run
 # 确认无误后再执行移动：
-python datasets/cleaning/deduplicate.py --src datasets/raw --dst datasets/cleaning/duplicates --threshold 5 --move
+python datasets/scripts/deduplicate.py --src datasets/raw --dst datasets/cleaning/duplicates --threshold 5 --move
 ```
 
 建议流程：
