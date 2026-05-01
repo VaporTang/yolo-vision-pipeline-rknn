@@ -115,10 +115,15 @@ See `datasets/videos/README.md` for detailed options.
 示例命令（先用 `--dry-run` 预览）：
 
 ```bash
-python datasets/scripts/deduplicate.py --src datasets/raw --images-subdir images --labels-subdir labels --dst datasets/cleaning/duplicates --threshold 5 --dry-run
+python datasets/scripts/deduplicate.py --src datasets/raw --images-subdir images --labels-subdir labels --dst datasets/cleaning/duplicates --threshold 5 --workers 0 --dry-run
 ```
 
 确认后可以使用 `--move` 将重复项移动到目标目录以便人工复核。
+
+速度提示：
+
+- `--workers N` 可并行计算哈希（`0` 表示单进程，推荐 4~12 之间按机器调整）。
+- `--workers -1` 表示使用 `CPU 核心数 - 1`（给系统预留资源）。
 
 #### 3. Train a Model
 
