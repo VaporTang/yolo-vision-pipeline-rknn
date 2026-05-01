@@ -5,11 +5,11 @@ datasets/scripts/deduplicate.py
 查找并分离高度相似/重复的图像（同时移动或复制对应的标签文件）。
 
 用法示例:
-  python datasets/scripts/deduplicate.py --src datasets/raw --dst datasets/cleaning/duplicates --move --threshold 5
-    python datasets/scripts/deduplicate.py --src datasets/raw --dst datasets/cleaning/duplicates --gui
+    python datasets/scripts/deduplicate.py --src datasets/raw --dst datasets/cleaning/duplicates --move --hash-type phash --threshold 8
+    python datasets/scripts/deduplicate.py --src datasets/raw --dst datasets/cleaning/duplicates --gui --hash-type phash
 
-默认行为是扫描 `datasets/raw`，识别平均哈希（aHash）汉明距离小于等于阈值的图像为重复项。
-GUI 模式会将相似图分组，并支持人工审核与按组导出。
+默认行为是扫描 `datasets/raw`，识别哈希汉明距离小于等于阈值的图像为重复项。
+GUI 模式使用“代表图分组”，避免传递合并导致大组误报。
 """
 
 import argparse
@@ -18,6 +18,8 @@ from itertools import repeat
 import os
 import shutil
 import sys
+
+import numpy as np
 from PIL import Image
 
 
@@ -32,6 +34,63 @@ def image_ahash(path, hash_size=8):
             bits = 0
             for p in pixels:
                 bits = (bits << 1) | (1 if p > avg else 0)
+            return bits
+    except Exception:
+        return None
+
+
+def image_dhash(path, hash_size=8):
+    try:
+        with Image.open(path) as img:
+            img = img.convert("L").resize(
+                (hash_size + 1, hash_size), Image.Resampling.LANCZOS
+            )
+            pixels = list(img.getdata())
+            bits = 0
+            for row in range(hash_size):
+                row_start = row * (hash_size + 1)
+                for col in range(hash_size):
+                    left = pixels[row_start + col]
+                    right = pixels[row_start + col + 1]
+                    bits = (bits << 1) | (1 if left > right else 0)
+            return bits
+    except Exception:
+        return None
+
+
+_DCT_CACHE = {}
+
+
+def _get_dct_matrix(size):
+    matrix = _DCT_CACHE.get(size)
+    if matrix is not None:
+        return matrix
+    n = np.arange(size)
+    k = n.reshape(-1, 1)
+    matrix = np.cos((np.pi / size) * (n + 0.5) * k)
+    _DCT_CACHE[size] = matrix
+    return matrix
+
+
+def _dct_2d(pixels):
+    rows, cols = pixels.shape
+    dct_rows = _get_dct_matrix(rows)
+    dct_cols = _get_dct_matrix(cols)
+    return dct_rows.T @ pixels @ dct_cols
+
+
+def image_phash(path, hash_size=8, highfreq_factor=4):
+    try:
+        with Image.open(path) as img:
+            size = hash_size * highfreq_factor
+            img = img.convert("L").resize((size, size), Image.Resampling.LANCZOS)
+            pixels = np.asarray(img, dtype=np.float32)
+            dct = _dct_2d(pixels)
+            dct_low = dct[:hash_size, :hash_size]
+            median = np.median(dct_low[1:, 1:])
+            bits = 0
+            for value in dct_low.flatten():
+                bits = (bits << 1) | (1 if value > median else 0)
             return bits
     except Exception:
         return None
@@ -102,67 +161,14 @@ class BKTree:
                     stack.append(child)
         return None
 
-    def search_all(self, hash_value, threshold):
-        if self.root is None:
-            return []
 
-        matches = []
-        stack = [self.root]
-        while stack:
-            node = stack.pop()
-            d = hamming_distance(hash_value, node.hash)
-            if d <= threshold:
-                matches.append((node.path, d))
-            low = d - threshold
-            high = d + threshold
-            for dist, child in node.children.items():
-                if low <= dist <= high:
-                    stack.append(child)
-        return matches
-
-
-class UnionFind:
-    def __init__(self):
-        self.parent = {}
-        self.rank = {}
-
-    def add(self, item):
-        if item in self.parent:
-            return
-        self.parent[item] = item
-        self.rank[item] = 0
-
-    def find(self, item):
-        parent = self.parent.get(item)
-        if parent is None:
-            return None
-        if parent != item:
-            self.parent[item] = self.find(parent)
-        return self.parent[item]
-
-    def union(self, a, b):
-        root_a = self.find(a)
-        root_b = self.find(b)
-        if root_a is None or root_b is None or root_a == root_b:
-            return
-        rank_a = self.rank[root_a]
-        rank_b = self.rank[root_b]
-        if rank_a < rank_b:
-            self.parent[root_a] = root_b
-        elif rank_a > rank_b:
-            self.parent[root_b] = root_a
-        else:
-            self.parent[root_b] = root_a
-            self.rank[root_a] += 1
-
-
-def iter_hashes(paths, hash_size, workers, report_every=500):
+def iter_hashes(paths, hash_func, hash_size, workers, report_every=500):
     total = len(paths)
     if workers == 0:
         for i, path in enumerate(paths, 1):
             if report_every and i % report_every == 0:
                 print(f"Hashed {i}/{total}...")
-            yield path, image_ahash(path, hash_size=hash_size)
+            yield path, hash_func(path, hash_size=hash_size)
         return
 
     with cf.ProcessPoolExecutor(max_workers=workers) as ex:
@@ -170,7 +176,7 @@ def iter_hashes(paths, hash_size, workers, report_every=500):
         for i, (path, h) in enumerate(
             zip(
                 paths,
-                ex.map(image_ahash, paths, repeat(hash_size), chunksize=chunksize),
+                ex.map(hash_func, paths, repeat(hash_size), chunksize=chunksize),
             ),
             1,
         ):
@@ -204,33 +210,33 @@ def ensure_dir(path):
     os.makedirs(path, exist_ok=True)
 
 
-def build_similar_groups(image_paths, hash_size, threshold, workers):
-    tree = BKTree()
-    uf = UnionFind()
+def build_similar_groups(image_paths, hash_func, hash_size, threshold, workers):
+    groups = []
     hashes = {}
 
-    for img_path, h in iter_hashes(image_paths, hash_size=hash_size, workers=workers):
+    for img_path, h in iter_hashes(
+        image_paths, hash_func=hash_func, hash_size=hash_size, workers=workers
+    ):
         if h is None:
             print(f"无法读取图像，跳过: {img_path}")
             continue
 
-        uf.add(img_path)
-        matches = tree.search_all(h, threshold)
-        for match_path, _ in matches:
-            uf.add(match_path)
-            uf.union(img_path, match_path)
-
-        tree.add(h, img_path)
         hashes[img_path] = h
+        best_group = None
+        best_dist = None
+        for group in groups:
+            rep_hash = group["rep_hash"]
+            dist = hamming_distance(h, rep_hash)
+            if dist <= threshold and (best_dist is None or dist < best_dist):
+                best_group = group
+                best_dist = dist
 
-    groups = {}
-    for path in hashes.keys():
-        root = uf.find(path)
-        if root is None:
-            continue
-        groups.setdefault(root, []).append(path)
+        if best_group is None:
+            groups.append({"rep": img_path, "rep_hash": h, "paths": [img_path]})
+        else:
+            best_group["paths"].append(img_path)
 
-    grouped = [sorted(paths) for paths in groups.values() if len(paths) > 1]
+    grouped = [sorted(group["paths"]) for group in groups if len(group["paths"]) > 1]
     grouped.sort(key=lambda g: (-len(g), g[0]))
     return grouped, hashes
 
@@ -238,6 +244,7 @@ def build_similar_groups(image_paths, hash_size, threshold, workers):
 def export_grouped_results(
     groups,
     selections,
+    decisions,
     dst,
     move,
     include_kept,
@@ -247,12 +254,15 @@ def export_grouped_results(
 ):
     for index, group in enumerate(groups, 1):
         kept = selections.get(index - 1, group[0])
+        group_decisions = decisions.get(index - 1, {})
         group_dir = os.path.join(dst, f"group_{index:04d}")
         image_base = os.path.join(group_dir, "images")
         label_base = os.path.join(group_dir, "labels")
 
         for path in group:
-            if path == kept and not include_kept:
+            decision = group_decisions.get(path)
+            is_kept = decision == "keep" or (decision is None and path == kept)
+            if is_kept and not include_kept:
                 continue
 
             if images_root:
@@ -264,7 +274,7 @@ def export_grouped_results(
             ensure_dir(os.path.dirname(target_image))
 
             if not dry_run:
-                if move:
+                if move and not is_kept:
                     shutil.move(path, target_image)
                 else:
                     shutil.copy2(path, target_image)
@@ -292,18 +302,20 @@ def export_grouped_results(
 def launch_gui(groups, hashes, args, images_root, labels_root, src):
     try:
         from PySide6.QtCore import Qt, QUrl
-        from PySide6.QtGui import QDesktopServices, QPixmap
+        from PySide6.QtGui import QColor, QDesktopServices, QPixmap
         from PySide6.QtWidgets import (
             QApplication,
             QCheckBox,
             QComboBox,
             QHBoxLayout,
+            QAbstractItemView,
             QLabel,
             QListWidget,
             QListWidgetItem,
             QMainWindow,
             QMessageBox,
             QPushButton,
+            QShortcut,
             QSizePolicy,
             QVBoxLayout,
             QWidget,
@@ -318,6 +330,7 @@ def launch_gui(groups, hashes, args, images_root, labels_root, src):
             self.groups = groups
             self.hashes = hashes
             self.selections = {i: group[0] for i, group in enumerate(groups)}
+            self.decisions = {i: {} for i in range(len(groups))}
             self.current_group_index = 0
 
             self.setWindowTitle("Duplicate Review")
@@ -343,8 +356,30 @@ def launch_gui(groups, hashes, args, images_root, labels_root, src):
             right.addWidget(self.keep_combo)
 
             self.image_list = QListWidget()
+            self.image_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
             self.image_list.currentRowChanged.connect(self.on_image_selected)
             right.addWidget(self.image_list, 2)
+
+            decision_row = QHBoxLayout()
+            self.keep_button = QPushButton("Mark Keep")
+            self.keep_button.clicked.connect(lambda: self.set_decision("keep"))
+            decision_row.addWidget(self.keep_button)
+
+            self.discard_button = QPushButton("Mark Discard")
+            self.discard_button.clicked.connect(lambda: self.set_decision("discard"))
+            decision_row.addWidget(self.discard_button)
+
+            self.clear_button = QPushButton("Clear Mark")
+            self.clear_button.clicked.connect(lambda: self.set_decision(None))
+            decision_row.addWidget(self.clear_button)
+            right.addLayout(decision_row)
+
+            QShortcut("K", self, activated=lambda: self.set_decision("keep"))
+            QShortcut("D", self, activated=lambda: self.set_decision("discard"))
+            QShortcut("C", self, activated=lambda: self.set_decision(None))
+            QShortcut("Ctrl+K", self, activated=lambda: self.set_decision("keep"))
+            QShortcut("Ctrl+D", self, activated=lambda: self.set_decision("discard"))
+            QShortcut("Ctrl+Shift+C", self, activated=lambda: self.set_decision(None))
 
             self.preview = QLabel("No image")
             self.preview.setAlignment(Qt.AlignCenter)
@@ -419,6 +454,7 @@ def launch_gui(groups, hashes, args, images_root, labels_root, src):
             if not group:
                 return
             kept = self.selections.get(self.current_group_index, group[0])
+            group_decisions = self.decisions.get(self.current_group_index, {})
             self.image_list.blockSignals(True)
             self.image_list.clear()
             for path in group:
@@ -426,7 +462,14 @@ def launch_gui(groups, hashes, args, images_root, labels_root, src):
                 label = f"{os.path.basename(path)} | dist {dist}"
                 item = QListWidgetItem(label)
                 item.setData(Qt.UserRole, path)
-                if path == kept:
+                decision = group_decisions.get(path)
+                if decision == "keep":
+                    item.setText(label + " | keep")
+                    item.setBackground(QColor("#d7f7d0"))
+                elif decision == "discard":
+                    item.setText(label + " | discard")
+                    item.setBackground(QColor("#f7d7d7"))
+                elif path == kept:
                     item.setText(label + " | kept")
                 self.image_list.addItem(item)
             self.image_list.setCurrentRow(0)
@@ -441,6 +484,13 @@ def launch_gui(groups, hashes, args, images_root, labels_root, src):
             if not item:
                 return None
             return item.data(Qt.UserRole)
+
+        def selected_paths(self):
+            items = self.image_list.selectedItems()
+            if not items:
+                current = self.current_selected_path()
+                return [current] if current else []
+            return [item.data(Qt.UserRole) for item in items]
 
         def update_preview(self):
             path = self.current_selected_path()
@@ -478,6 +528,7 @@ def launch_gui(groups, hashes, args, images_root, labels_root, src):
             export_grouped_results(
                 self.groups,
                 self.selections,
+                self.decisions,
                 dst=args.dst,
                 move=move,
                 include_kept=self.include_kept.isChecked(),
@@ -486,6 +537,20 @@ def launch_gui(groups, hashes, args, images_root, labels_root, src):
                 dry_run=args.dry_run,
             )
             QMessageBox.information(self, "Done", "Export complete.")
+
+        def set_decision(self, decision):
+            group = self.current_group()
+            if not group:
+                return
+            paths = self.selected_paths()
+            if not paths:
+                return
+            for path in paths:
+                if decision is None:
+                    self.decisions[self.current_group_index].pop(path, None)
+                else:
+                    self.decisions[self.current_group_index][path] = decision
+            self.refresh_image_list()
 
     app = QApplication(sys.argv)
     window = DedupReviewWindow()
@@ -518,8 +583,8 @@ def main():
     p.add_argument(
         "--threshold",
         type=int,
-        default=5,
-        help="汉明距离阈值，越小要求越严格（默认 5）",
+        default=8,
+        help="汉明距离阈值，越小要求越严格（默认 8）",
     )
     p.add_argument("--move", action="store_true", help="移动重复文件（默认复制）")
     p.add_argument(
@@ -530,6 +595,12 @@ def main():
         type=int,
         default=8,
         help="哈希尺寸（hash_size x hash_size），默认 8",
+    )
+    p.add_argument(
+        "--hash-type",
+        choices=("ahash", "dhash", "phash"),
+        default="phash",
+        help="哈希算法类型（默认 phash）",
     )
     p.add_argument(
         "--workers",
@@ -573,9 +644,17 @@ def main():
         workers = max(1, (os.cpu_count() or 1) + workers)
     print(f"Total images: {len(image_paths)} | workers: {workers}")
 
+    hash_funcs = {
+        "ahash": image_ahash,
+        "dhash": image_dhash,
+        "phash": image_phash,
+    }
+    hash_func = hash_funcs[args.hash_type]
+
     if args.gui:
         groups, hashes = build_similar_groups(
             image_paths,
+            hash_func=hash_func,
             hash_size=args.hash_size,
             threshold=args.threshold,
             workers=workers,
@@ -588,7 +667,7 @@ def main():
 
     tree = BKTree()
     for img_path, h in iter_hashes(
-        image_paths, hash_size=args.hash_size, workers=workers
+        image_paths, hash_func=hash_func, hash_size=args.hash_size, workers=workers
     ):
         if h is None:
             print(f"无法读取图像，跳过: {img_path}")
