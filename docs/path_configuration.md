@@ -31,11 +31,11 @@ Check what paths are being used:
 ```powershell
 # Windows
 python src/train.py --show-paths
-
-# Or any other script
-python src/export/1_pt_to_onnx.py --show-paths
-python src/dataset_tools.py show-paths
 ```
+
+This check uses only the standard library, so it can run before the training environment is installed.
+
+The other scripts may still require their own installed dependencies.
 
 This will display all configured paths with their resolved absolute paths.
 

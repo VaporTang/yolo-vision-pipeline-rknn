@@ -162,12 +162,15 @@ All paths in the pipeline are centralized in `configs/paths.yaml`. This keeps th
 
   ```powershell
   python verify_paths.py
+  ```
 
 1. **View current configuration**:
 
   ```powershell
   python src/train.py --show-paths
   ```
+
+   This path check uses only the standard library, so you can run it before installing the training dependencies.
 
 1. **Customize paths** (if needed):
   Edit `configs/paths.yaml`:

@@ -8,7 +8,7 @@ $ScriptDir = $PSScriptRoot
 if ([string]::IsNullOrEmpty($ScriptDir)) { $ScriptDir = (Get-Location).Path }
 
 Write-Host "╔══════════════════════════════════════════════════════════════╗" -ForegroundColor Green
-Write-Host "║  YOLO Vision Pipeline RKNN - Windows Setup                  ║" -ForegroundColor Green
+Write-Host "║  YOLO Vision Pipeline RKNN - Windows Setup                   ║" -ForegroundColor Green
 Write-Host "╚══════════════════════════════════════════════════════════════╝" -ForegroundColor Green
 
 Write-Host "`nThis script will set up two Conda environments for:" -ForegroundColor Yellow
@@ -33,6 +33,13 @@ Write-Host "Checking required commands..." -ForegroundColor Cyan
 CheckCommand conda "Please install Miniconda or Anaconda: https://docs.conda.io/en/latest/miniconda.html"
 CheckCommand git "Please install Git (https://git-scm.com/)"
 Write-Host "✅ Required commands present`n" -ForegroundColor Green
+
+# 1.5 接受 Conda 服务条款
+Write-Host "Accepting Conda Terms of Service..." -ForegroundColor Cyan
+& conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main 2>$null
+& conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r 2>$null
+& conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/msys2 2>$null
+Write-Host "✅ Terms of Service accepted`n" -ForegroundColor Green
 
 # 2. 创建 Conda 环境（若已存在则跳过）
 $trainEnvName = "rknn-yolov8-train"

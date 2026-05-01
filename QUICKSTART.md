@@ -45,6 +45,8 @@ project_root: null
 # project_root: C:\Users\YourUsername\Documents\GitHub\yolo-vision-pipeline-rknn
 ```
 
+这个路径检查命令不依赖训练环境，首次克隆后就可以直接运行。
+
 查看当前路径配置：
 
 ```powershell
