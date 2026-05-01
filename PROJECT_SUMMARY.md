@@ -113,7 +113,7 @@ All parameters centralized in YAML files:
 ```yaml
 # configs/train_config.yaml
 training:
-  model: yolov8l.pt
+  model: yolov8s.pt
   epochs: 300
   batch: -1
 ```

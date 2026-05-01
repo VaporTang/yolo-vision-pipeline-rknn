@@ -2,7 +2,7 @@
 # This configuration is used for training YOLOv8 models
 
 training:
-  model: yolov8l.pt # Model variant: yolov8n, yolov8s, yolov8m, yolov8l, yolov8x
+  model: yolov8s.pt # Model variant: yolov8n, yolov8s, yolov8m, yolov8l, yolov8x
   data: configs/data.yaml # Path to dataset YAML file
   epochs: 300 # Number of training epochs
   batch: -1 # Batch size (-1 for auto)

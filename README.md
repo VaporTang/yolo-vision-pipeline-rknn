@@ -78,6 +78,18 @@ conda activate rknn-yolov8-train
 #       └── img_val1.txt, ...
 ```
 
+#### 数据清洗（可选但推荐）
+
+为了减少训练集中的冗余样本，建议在整理 `datasets/yolo_dataset` 前先对 `datasets/raw` 进行去重与清洗。仓库包含去重工具：`datasets/cleaning/deduplicate.py`，并在 `datasets/cleaning/README.md` 中给出使用说明与示例命令。
+
+示例命令（先用 `--dry-run` 预览）：
+
+```bash
+python datasets/cleaning/deduplicate.py --src datasets/raw --dst datasets/cleaning/duplicates --threshold 5 --dry-run
+```
+
+确认后可以使用 `--move` 将重复项移动到目标目录以便人工复核。
+
 #### 3. Train a Model
 
 ```powershell

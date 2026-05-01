@@ -85,6 +85,26 @@ datasets/yolo_dataset/
     └── labels/
 ```
 
+### 数据清洗（可选但推荐）
+
+在将图片放入 `datasets/yolo_dataset` 前，建议先对原始数据进行清洗，去除高度重复或近似重复的图片以减少训练冗余。
+
+仓库提供了一个去重脚本：`datasets/cleaning/deduplicate.py`，并附有使用说明 `datasets/cleaning/README.md`。
+
+示例（先预览，再移动重复项）：
+
+```powershell
+python datasets/cleaning/deduplicate.py --src datasets/raw --dst datasets/cleaning/duplicates --threshold 5 --dry-run
+# 确认无误后再执行移动：
+python datasets/cleaning/deduplicate.py --src datasets/raw --dst datasets/cleaning/duplicates --threshold 5 --move
+```
+
+建议流程：
+
+- 将原始图片与标签放到 `datasets/raw`。
+- 运行去重脚本并检查 `datasets/cleaning/duplicates`。
+- 将清洗后的数据组织到 `datasets/yolo_dataset/train` 和 `datasets/yolo_dataset/valid`。
+
 在 `configs/data.yaml` 中更新你的类别信息：
 
 ```yaml
