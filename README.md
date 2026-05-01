@@ -120,6 +120,14 @@ python datasets/scripts/deduplicate.py --src datasets/raw --images-subdir images
 
 确认后可以使用 `--move` 将重复项移动到目标目录以便人工复核。
 
+GUI 人工审核（按相似组打包导出）：
+
+```bash
+python datasets/scripts/deduplicate.py --src datasets/raw --dst datasets/cleaning/duplicates --gui
+```
+
+GUI 会将相似图分组显示，并支持选择保留图后按组导出（每组包含 images/ 和 labels/）。
+
 速度提示：
 
 - `--workers N` 可并行计算哈希（`0` 表示单进程，推荐 4~12 之间按机器调整）。

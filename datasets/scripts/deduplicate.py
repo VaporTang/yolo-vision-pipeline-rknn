@@ -6,8 +6,10 @@ datasets/scripts/deduplicate.py
 
 用法示例:
   python datasets/scripts/deduplicate.py --src datasets/raw --dst datasets/cleaning/duplicates --move --threshold 5
+    python datasets/scripts/deduplicate.py --src datasets/raw --dst datasets/cleaning/duplicates --gui
 
 默认行为是扫描 `datasets/raw`，识别平均哈希（aHash）汉明距离小于等于阈值的图像为重复项。
+GUI 模式会将相似图分组，并支持人工审核与按组导出。
 """
 
 import argparse
@@ -100,6 +102,59 @@ class BKTree:
                     stack.append(child)
         return None
 
+    def search_all(self, hash_value, threshold):
+        if self.root is None:
+            return []
+
+        matches = []
+        stack = [self.root]
+        while stack:
+            node = stack.pop()
+            d = hamming_distance(hash_value, node.hash)
+            if d <= threshold:
+                matches.append((node.path, d))
+            low = d - threshold
+            high = d + threshold
+            for dist, child in node.children.items():
+                if low <= dist <= high:
+                    stack.append(child)
+        return matches
+
+
+class UnionFind:
+    def __init__(self):
+        self.parent = {}
+        self.rank = {}
+
+    def add(self, item):
+        if item in self.parent:
+            return
+        self.parent[item] = item
+        self.rank[item] = 0
+
+    def find(self, item):
+        parent = self.parent.get(item)
+        if parent is None:
+            return None
+        if parent != item:
+            self.parent[item] = self.find(parent)
+        return self.parent[item]
+
+    def union(self, a, b):
+        root_a = self.find(a)
+        root_b = self.find(b)
+        if root_a is None or root_b is None or root_a == root_b:
+            return
+        rank_a = self.rank[root_a]
+        rank_b = self.rank[root_b]
+        if rank_a < rank_b:
+            self.parent[root_a] = root_b
+        elif rank_a > rank_b:
+            self.parent[root_b] = root_a
+        else:
+            self.parent[root_b] = root_a
+            self.rank[root_a] += 1
+
 
 def iter_hashes(paths, hash_size, workers, report_every=500):
     total = len(paths)
@@ -149,6 +204,295 @@ def ensure_dir(path):
     os.makedirs(path, exist_ok=True)
 
 
+def build_similar_groups(image_paths, hash_size, threshold, workers):
+    tree = BKTree()
+    uf = UnionFind()
+    hashes = {}
+
+    for img_path, h in iter_hashes(image_paths, hash_size=hash_size, workers=workers):
+        if h is None:
+            print(f"无法读取图像，跳过: {img_path}")
+            continue
+
+        uf.add(img_path)
+        matches = tree.search_all(h, threshold)
+        for match_path, _ in matches:
+            uf.add(match_path)
+            uf.union(img_path, match_path)
+
+        tree.add(h, img_path)
+        hashes[img_path] = h
+
+    groups = {}
+    for path in hashes.keys():
+        root = uf.find(path)
+        if root is None:
+            continue
+        groups.setdefault(root, []).append(path)
+
+    grouped = [sorted(paths) for paths in groups.values() if len(paths) > 1]
+    grouped.sort(key=lambda g: (-len(g), g[0]))
+    return grouped, hashes
+
+
+def export_grouped_results(
+    groups,
+    selections,
+    dst,
+    move,
+    include_kept,
+    images_root,
+    labels_root,
+    dry_run,
+):
+    for index, group in enumerate(groups, 1):
+        kept = selections.get(index - 1, group[0])
+        group_dir = os.path.join(dst, f"group_{index:04d}")
+        image_base = os.path.join(group_dir, "images")
+        label_base = os.path.join(group_dir, "labels")
+
+        for path in group:
+            if path == kept and not include_kept:
+                continue
+
+            if images_root:
+                rel_image = os.path.relpath(path, images_root)
+            else:
+                rel_image = os.path.basename(path)
+
+            target_image = os.path.join(image_base, rel_image)
+            ensure_dir(os.path.dirname(target_image))
+
+            if not dry_run:
+                if move:
+                    shutil.move(path, target_image)
+                else:
+                    shutil.copy2(path, target_image)
+
+            label = corresponding_label(
+                path, images_root=images_root, labels_root=labels_root
+            )
+            if label:
+                if labels_root:
+                    rel_label = os.path.relpath(label, labels_root)
+                elif images_root:
+                    rel_label = os.path.relpath(label, images_root)
+                else:
+                    rel_label = os.path.basename(label)
+
+                target_label = os.path.join(label_base, rel_label)
+                ensure_dir(os.path.dirname(target_label))
+                if not dry_run:
+                    if move:
+                        shutil.move(label, target_label)
+                    else:
+                        shutil.copy2(label, target_label)
+
+
+def launch_gui(groups, hashes, args, images_root, labels_root, src):
+    try:
+        from PySide6.QtCore import Qt, QUrl
+        from PySide6.QtGui import QDesktopServices, QPixmap
+        from PySide6.QtWidgets import (
+            QApplication,
+            QCheckBox,
+            QComboBox,
+            QHBoxLayout,
+            QLabel,
+            QListWidget,
+            QListWidgetItem,
+            QMainWindow,
+            QMessageBox,
+            QPushButton,
+            QSizePolicy,
+            QVBoxLayout,
+            QWidget,
+        )
+    except Exception:
+        print("未检测到 PySide6，请先安装: pip install PySide6", file=sys.stderr)
+        sys.exit(2)
+
+    class DedupReviewWindow(QMainWindow):
+        def __init__(self):
+            super().__init__()
+            self.groups = groups
+            self.hashes = hashes
+            self.selections = {i: group[0] for i, group in enumerate(groups)}
+            self.current_group_index = 0
+
+            self.setWindowTitle("Duplicate Review")
+            self.resize(1200, 720)
+
+            root = QWidget()
+            main_layout = QHBoxLayout(root)
+
+            self.group_list = QListWidget()
+            for i, group in enumerate(groups, 1):
+                self.group_list.addItem(f"Group {i} ({len(group)} images)")
+            self.group_list.currentRowChanged.connect(self.on_group_changed)
+            main_layout.addWidget(self.group_list, 1)
+
+            right = QVBoxLayout()
+            main_layout.addLayout(right, 3)
+
+            self.group_info = QLabel("Select a group")
+            right.addWidget(self.group_info)
+
+            self.keep_combo = QComboBox()
+            self.keep_combo.currentIndexChanged.connect(self.on_keep_changed)
+            right.addWidget(self.keep_combo)
+
+            self.image_list = QListWidget()
+            self.image_list.currentRowChanged.connect(self.on_image_selected)
+            right.addWidget(self.image_list, 2)
+
+            self.preview = QLabel("No image")
+            self.preview.setAlignment(Qt.AlignCenter)
+            self.preview.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+            self.preview.setMinimumHeight(320)
+            right.addWidget(self.preview, 3)
+
+            self.include_kept = QCheckBox("Include kept image in export")
+            self.include_kept.setChecked(True)
+            right.addWidget(self.include_kept)
+
+            button_row = QHBoxLayout()
+            self.open_button = QPushButton("Open selected file")
+            self.open_button.clicked.connect(self.on_open_selected)
+            button_row.addWidget(self.open_button)
+
+            self.export_copy = QPushButton("Export (Copy)")
+            self.export_copy.clicked.connect(lambda: self.on_export(move=False))
+            button_row.addWidget(self.export_copy)
+
+            self.export_move = QPushButton("Export (Move)")
+            self.export_move.clicked.connect(lambda: self.on_export(move=True))
+            button_row.addWidget(self.export_move)
+            right.addLayout(button_row)
+
+            self.setCentralWidget(root)
+            if groups:
+                self.group_list.setCurrentRow(0)
+
+        def resizeEvent(self, event):
+            super().resizeEvent(event)
+            self.update_preview()
+
+        def current_group(self):
+            if not self.groups:
+                return []
+            index = self.group_list.currentRow()
+            if index < 0:
+                index = 0
+            self.current_group_index = index
+            return self.groups[index]
+
+        def on_group_changed(self, index):
+            group = self.current_group()
+            if not group:
+                return
+
+            self.group_info.setText(
+                f"Group {index + 1} / {len(self.groups)} | {len(group)} images"
+            )
+            self.keep_combo.blockSignals(True)
+            self.keep_combo.clear()
+            for path in group:
+                self.keep_combo.addItem(os.path.basename(path), userData=path)
+            kept = self.selections.get(index, group[0])
+            kept_index = max(0, group.index(kept))
+            self.keep_combo.setCurrentIndex(kept_index)
+            self.keep_combo.blockSignals(False)
+            self.refresh_image_list()
+
+        def on_keep_changed(self, index):
+            group = self.current_group()
+            if not group:
+                return
+            kept = self.keep_combo.currentData()
+            if kept:
+                self.selections[self.current_group_index] = kept
+            self.refresh_image_list()
+
+        def refresh_image_list(self):
+            group = self.current_group()
+            if not group:
+                return
+            kept = self.selections.get(self.current_group_index, group[0])
+            self.image_list.blockSignals(True)
+            self.image_list.clear()
+            for path in group:
+                dist = hamming_distance(self.hashes[path], self.hashes[kept])
+                label = f"{os.path.basename(path)} | dist {dist}"
+                item = QListWidgetItem(label)
+                item.setData(Qt.UserRole, path)
+                if path == kept:
+                    item.setText(label + " | kept")
+                self.image_list.addItem(item)
+            self.image_list.setCurrentRow(0)
+            self.image_list.blockSignals(False)
+            self.update_preview()
+
+        def on_image_selected(self, _):
+            self.update_preview()
+
+        def current_selected_path(self):
+            item = self.image_list.currentItem()
+            if not item:
+                return None
+            return item.data(Qt.UserRole)
+
+        def update_preview(self):
+            path = self.current_selected_path()
+            if not path or not os.path.exists(path):
+                self.preview.setText("No image")
+                self.preview.setPixmap(QPixmap())
+                return
+            pix = QPixmap(path)
+            if pix.isNull():
+                self.preview.setText("Preview unavailable")
+                self.preview.setPixmap(QPixmap())
+                return
+            scaled = pix.scaled(
+                self.preview.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation
+            )
+            self.preview.setPixmap(scaled)
+
+        def on_open_selected(self):
+            path = self.current_selected_path()
+            if not path:
+                return
+            QDesktopServices.openUrl(QUrl.fromLocalFile(path))
+
+        def on_export(self, move):
+            if not self.groups:
+                return
+            mode = "move" if move else "copy"
+            reply = QMessageBox.question(
+                self,
+                "Confirm export",
+                f"Export {len(self.groups)} groups to {args.dst} (mode: {mode}). Proceed?",
+            )
+            if reply != QMessageBox.Yes:
+                return
+            export_grouped_results(
+                self.groups,
+                self.selections,
+                dst=args.dst,
+                move=move,
+                include_kept=self.include_kept.isChecked(),
+                images_root=images_root,
+                labels_root=labels_root,
+                dry_run=args.dry_run,
+            )
+            QMessageBox.information(self, "Done", "Export complete.")
+
+    app = QApplication(sys.argv)
+    window = DedupReviewWindow()
+    window.show()
+    app.exec()
+
+
 def main():
     p = argparse.ArgumentParser(prog="deduplicate")
     p.add_argument(
@@ -193,12 +537,18 @@ def main():
         default=0,
         help="哈希并行进程数，0 表示单进程（默认 0）",
     )
+    p.add_argument(
+        "--gui",
+        action="store_true",
+        help="启动可视化审核界面（PySide6）",
+    )
     args = p.parse_args()
 
     src = os.path.abspath(args.src)
     images_root = os.path.abspath(os.path.join(src, args.images_subdir))
     labels_root = os.path.abspath(os.path.join(src, args.labels_subdir))
     dst = os.path.abspath(args.dst)
+    args.dst = dst
 
     if not os.path.isdir(images_root):
         print(f"图片目录不存在: {images_root}", file=sys.stderr)
@@ -222,6 +572,19 @@ def main():
     if workers < 0:
         workers = max(1, (os.cpu_count() or 1) + workers)
     print(f"Total images: {len(image_paths)} | workers: {workers}")
+
+    if args.gui:
+        groups, hashes = build_similar_groups(
+            image_paths,
+            hash_size=args.hash_size,
+            threshold=args.threshold,
+            workers=workers,
+        )
+        if not groups:
+            print("未发现重复图片。")
+            return
+        launch_gui(groups, hashes, args, images_root, labels_root, src)
+        return
 
     tree = BKTree()
     for img_path, h in iter_hashes(
