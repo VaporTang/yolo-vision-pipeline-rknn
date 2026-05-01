@@ -17,7 +17,7 @@ This project consolidates the entire YOLOv8 → ONNX → RKNN conversion pipelin
 
 ## Project Structure
 
-```
+```text
 yolo-vision-pipeline-rknn/
 ├── configs/                      # Configuration files
 │   ├── data.yaml                 # Dataset configuration
@@ -56,8 +56,12 @@ cd path/to/yolo-vision-pipeline-rknn
 # Run the setup script
 .\setup_win.ps1
 
-# Activate the environment
-conda activate rknn-yolov8
+# Activate the training environment
+conda activate rknn-yolov8-train
+
+# The setup script clones and installs both YOLO repos from source:
+# - rknn-yolov8-train for official Ultralytics training
+# - rknn-yolov8-export for Rockchip ONNX export
 ```
 
 #### 2. Prepare Your Dataset
@@ -128,7 +132,7 @@ source rknn-env/bin/activate
 ```bash
 # 20-30 representative training images for quantization
 python src/dataset_tools.py prepare_calibration \
-    --image-dir datasets/yolo_dataset/train/images \
+  --image-dir datasets/yolo_dataset/train/images \
     --output datasets/calibration/dataset.txt \
     --num-images 20
 ```
@@ -139,6 +143,9 @@ python src/dataset_tools.py prepare_calibration \
 # Copy ONNX model from Windows
 cp /mnt/c/Users/YourUsername/.../best.onnx ./models/
 
+# Activate the export environment before converting
+conda activate rknn-yolov8-export
+
 # Run conversion
 python src/export/2_onnx_to_rknn.py --config configs/rknn_config.yaml
 ```
@@ -147,7 +154,7 @@ Output: `models/best.rknn`
 
 ## ⚙️ Path Configuration System
 
-All paths in the pipeline are centralized in `configs/paths.yaml`. This eliminates the need to manually copy paths between scripts.
+All paths in the pipeline are centralized in `configs/paths.yaml`. This keeps the training and export scripts aligned.
 
 ### Quick Setup
 
@@ -155,7 +162,6 @@ All paths in the pipeline are centralized in `configs/paths.yaml`. This eliminat
 
   ```powershell
   python verify_paths.py
-  ```
 
 1. **View current configuration**:
 
@@ -299,7 +305,7 @@ python src/dataset_tools.py prepare_calibration \
 
 ```powershell
 .\setup_win.ps1
-conda activate rknn-yolov8
+conda activate rknn-yolov8-train
 ```
 
 ### Step 2: Prepare and Train
@@ -332,6 +338,9 @@ source rknn-env/bin/activate
 # Copy the ONNX model
 cp /mnt/c/path/to/models/best.onnx ./models/
 
+# Activate the export environment before converting
+conda activate rknn-yolov8-export
+
 # Calibration dataset should already be in datasets/calibration/dataset.txt
 # If not, prepare it:
 # python src/dataset_tools.py prepare_calibration \
@@ -359,13 +368,13 @@ RKNN conversion supports multiple Rockchip platforms. Set in `configs/rknn_confi
 
 ```powershell
 # Activate
-conda activate rknn-yolov8
+conda activate rknn-yolov8-train
 
 # Deactivate
 conda deactivate
 
 # Remove (if needed)
-conda env remove -n rknn-yolov8
+conda env remove -n rknn-yolov8-train
 ```
 
 ### Ubuntu/WSL

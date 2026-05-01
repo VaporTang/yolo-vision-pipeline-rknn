@@ -9,9 +9,33 @@
 - NVIDIA GPU（可选，但强烈建议）
 - Git
 
+### 如果还没有安装 Miniconda
+
+建议直接安装 Miniconda（比 Anaconda 更轻量，适合这个项目）：
+
+1. 打开官方页面：<https://www.anaconda.com/download/success?reg=skipped>
+2. 下载 Miniconda Windows x86_64 安装包
+3. 运行安装程序，建议选择默认安装位置
+4. 不建议勾选 Add installation to my PATH environment variable
+5. 建议勾选 Register Miniconda3 as my default Python 3.13
+6. 建议勾选 Clear the package cache upon completion
+7. 安装完成后，重新打开 PowerShell，并执行：
+
+```powershell
+conda --version
+```
+
+如果提示找不到 `conda`，先在新终端中执行：
+
+```powershell
+conda init powershell
+```
+
+然后关闭并重新打开 PowerShell 再试一次。
+
 ## 第一步：设置项目路径（可选，推荐）
 
-编辑 `configs/paths.yaml` 设置你的项目根目录（或者让它自动检测）：
+编辑 `configs/paths.yaml` 设置你的项目根目录，或者让它自动检测：
 
 ```yaml
 # 自动检测（推荐）
@@ -36,9 +60,14 @@ cd path/to/yolo-vision-pipeline-rknn
 # 运行一次性安装脚本
 .\setup_win.ps1
 
-# 激活环境
-conda activate rknn-yolov8
+# 激活训练环境
+conda activate rknn-yolov8-train
 ```
+
+脚本会分别创建两个环境：
+
+- `rknn-yolov8-train`：官方 Ultralytics 源码安装，用于训练
+- `rknn-yolov8-export`：Rockchip Ultralytics 源码安装，用于 ONNX 导出
 
 ## 第三步：准备数据集（时间不定）
 
@@ -70,15 +99,23 @@ names:
   5: red_placement_zone
 ```
 
-## 第三步：训练模型（1到数小时不等，取决于数据量）
+## 第四步：训练模型（1到数小时不等，取决于数据量）
 
 ```powershell
 python src/train.py
 ```
 
-模型将被保存至 `models/best.pt`
+模型将被保存至 `models/best.pt`。
 
-## 第四步：导出为 ONNX 格式（5-10分钟）
+## 第五步：导出为 ONNX 格式（5-10分钟）
+
+先切换到导出环境：
+
+```powershell
+conda activate rknn-yolov8-export
+```
+
+然后导出：
 
 ```powershell
 $env:PYTHONPATH = ".\"
@@ -87,7 +124,7 @@ python src/export/1_pt_to_onnx.py
 
 输出文件：`models/best.onnx`
 
-## 第五步：转换为 RKNN 格式（在 Ubuntu/WSL 环境下，10-20分钟）
+## 第六步：转换为 RKNN 格式（在 Ubuntu/WSL 环境下，10-20分钟）
 
 ### 仅限首次运行
 
@@ -103,7 +140,7 @@ source rknn-env/bin/activate
 # 从 Windows 环境中复制 ONNX 文件
 cp /mnt/c/path/to/models/best.onnx ./models/
 
-# 准备校准数据集（如果是首次运行）
+# 准备校准数据集（使用训练集图像）
 python src/dataset_tools.py prepare_calibration \
     --image-dir /mnt/c/path/to/training/images \
     --output datasets/calibration/dataset.txt
@@ -114,8 +151,6 @@ python src/export/2_onnx_to_rknn.py
 
 输出文件：`models/best.rknn`
 
----
-
 ## 下一步做什么？
 
 - **部署**：将 `models/best.rknn` 复制到你的 RK3588 设备上
@@ -125,7 +160,7 @@ python src/export/2_onnx_to_rknn.py
 ## 常见问题与故障排除
 
 | 问题 | 解决方案 |
-|---------|----------|
+| --------- | ---------- |
 | `PYTHONPATH` 环境变量错误 | 运行 `$env:PYTHONPATH = ".\"` |
 | CUDA 显存不足 (out of memory) | 减小批次大小，例如：`--batch 8` |
 | 找不到 RKNN toolkit | 运行 `source rknn-env/bin/activate` |

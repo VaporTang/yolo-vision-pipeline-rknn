@@ -1,10 +1,18 @@
-torch==2.1.2
-torchvision==0.16.2
-torchaudio==2.1.2
-ultralytics==8.0.0
+# Shared Windows dependencies for both the training and export Conda environments.
+# PyTorch is installed separately because the project uses the CUDA 12.4 wheel index.
+# Shared Windows dependencies for both the training and export Conda environments.
+# PyTorch and Ultralytics are installed separately by setup_win.ps1.
 opencv-python==4.8.1
 numpy==1.24.3
 pyyaml==6.0
+pillow==10.0.0
+requests==2.31.0
+tqdm==4.66.1
+matplotlib==3.7.2
+scikit-learn==1.3.1
+pydantic==2.3.0
+onnx==1.14.1
+onnxsim==0.4.35
 pillow==10.0.0
 requests==2.31.0
 tqdm==4.66.1
