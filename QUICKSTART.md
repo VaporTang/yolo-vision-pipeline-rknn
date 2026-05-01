@@ -122,10 +122,15 @@ datasets/yolo_dataset/
 示例（先预览，再移动重复项）：
 
 ```powershell
-python datasets/scripts/deduplicate.py --src datasets/raw --dst datasets/cleaning/duplicates --threshold 5 --dry-run
+python datasets/scripts/deduplicate.py --src datasets/raw --dst datasets/cleaning/duplicates --threshold 5 --workers 0 --dry-run
 # 确认无误后再执行移动：
-python datasets/scripts/deduplicate.py --src datasets/raw --dst datasets/cleaning/duplicates --threshold 5 --move
+python datasets/scripts/deduplicate.py --src datasets/raw --dst datasets/cleaning/duplicates --threshold 5 --workers 4 --move
 ```
+
+速度提示：
+
+- `--workers N` 可并行计算哈希（`0` 表示单进程，推荐 4~12 之间按机器调整）。
+- `--workers -1` 表示使用 `CPU 核心数 - 1`（给系统预留资源）。
 
 建议流程：
 
