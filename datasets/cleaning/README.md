@@ -20,4 +20,14 @@ datasets/raw/
 使用示例:
 
 ```bash
-python datasets/scripts/deduplicate.py --src datasets/raw --images-subdir images --labels-subdir labels --dst datasets/cleaning/duplicates --move
+# 预览（不移动/复制）
+python datasets/scripts/deduplicate.py --src datasets/raw --images-subdir images --labels-subdir labels --dst datasets/cleaning/duplicates --threshold 5 --workers 0 --dry-run
+
+# 确认后移动重复项
+python datasets/scripts/deduplicate.py --src datasets/raw --images-subdir images --labels-subdir labels --dst datasets/cleaning/duplicates --threshold 5 --workers 4 --move
+```
+
+速度提示:
+
+- `--workers N` 可并行计算哈希（`0` 表示单进程，推荐 4~12 之间按机器调整）。
+- `--workers -1` 表示使用 `CPU 核心数 - 1`（给系统预留资源）。
