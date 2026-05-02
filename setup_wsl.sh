@@ -88,6 +88,9 @@ echo ""
 echo "Installing compatible ONNX version..."
 pip install onnx==1.14.1
 
+echo "Installing PyYAML..."
+pip install pyyaml
+
 echo "✅ ONNX installed"
 echo ""
 

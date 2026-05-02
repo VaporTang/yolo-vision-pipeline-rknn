@@ -240,14 +240,16 @@ source ~/rknn-workdir/rknn-env/bin/activate
 python src/dataset_tools.py prepare_calibration --image-dir datasets/yolo_dataset/train/images --output datasets/calibration/dataset.txt --num-images 20
 ```
 
+The generated `datasets/calibration/dataset.txt` now contains absolute image paths, which is what RKNN Toolkit2 expects during quantization.
+
 #### 4. Convert ONNX to RKNN
 
 ```bash
 # Copy ONNX model from Windows
-cp /mnt/c/Users/YourUsername/.../best.onnx ./models/
+cp /mnt/c/Users/YourUsername/Documents/GitHub/yolo-vision-pipeline-rknn/models/best.onnx ./models/
 
-# Activate the export environment before converting
-conda activate rknn-yolov8-export
+# Activate the WSL venv
+source ~/rknn-workdir/rknn-env/bin/activate
 
 # Run conversion
 python src/export/2_onnx_to_rknn.py --config configs/rknn_config.yaml
@@ -456,13 +458,9 @@ source ~/rknn-workdir/rknn-env/bin/activate
 # Copy the ONNX model
 cp /mnt/c/path/to/models/best.onnx ./models/
 
-# Activate the export environment before converting
-conda activate rknn-yolov8-export
-
 # Calibration dataset should already be in datasets/calibration/dataset.txt
 # If not, prepare it:
-# python src/dataset_tools.py prepare_calibration \
-#     --image-dir /mnt/c/path/to/training/images ...
+# python src/dataset_tools.py prepare_calibration --image-dir /mnt/c/path/to/training/images --output datasets/calibration/dataset.txt --num-images 20
 
 # Convert
 python src/export/2_onnx_to_rknn.py
@@ -524,6 +522,14 @@ $env:PYTHONPATH = ".\"
 
 ```bash
 source ~/rknn-workdir/rknn-env/bin/activate
+```
+
+### "No module named 'yaml'"
+
+**Solution**: Install PyYAML in the WSL venv:
+
+```bash
+pip install pyyaml
 ```
 
 ### "ONNX model not found"
