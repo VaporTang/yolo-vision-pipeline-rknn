@@ -66,10 +66,18 @@ cd path/to/yolo-vision-pipeline-rknn
 conda activate rknn-yolov8-train
 ```
 
-脚本会分别创建两个环境：
+脚本会分别创建三个环境：
 
 - `rknn-yolov8-train`：官方 Ultralytics 源码安装，用于训练
 - `rknn-yolov8-export`：Rockchip Ultralytics 源码安装，用于 ONNX 导出
+- `x-anylabeling-cu12`：X-AnyLabeling 源码安装，用于 GPU 标注，默认 cu12
+
+如果你需要用 X-AnyLabeling 做数据标注，可以在安装完成后切换到标注环境：
+
+```powershell
+conda activate x-anylabeling-cu12
+xanylabeling
+```
 
 ## 第二步补充：从视频抽帧（可选）
 
@@ -122,10 +130,10 @@ datasets/yolo_dataset/
 
 ```powershell
 # 预览（不移动/复制）
-python datasets/scripts/deduplicate.py --src datasets/raw --dst datasets/cleaning/duplicates --threshold 4 --workers 0 --dry-run
+python datasets/scripts/deduplicate.py --src datasets/raw --dst datasets/cleaning/duplicates --threshold 3 --workers 0 --dry-run
 
 # 确认后移动重复项
-python datasets/scripts/deduplicate.py --src datasets/raw --dst datasets/cleaning/duplicates --threshold 4 --workers -4 --move
+python datasets/scripts/deduplicate.py --src datasets/raw --dst datasets/cleaning/duplicates --threshold 3 --workers -4 --move
 ```
 
 #### GUI 人工审核
@@ -201,6 +209,7 @@ python src/export/2_onnx_to_rknn.py
 - **部署**：将 `models/best.rknn` 复制到你的 RK3588 设备上
 - **优化**：在 `configs/train_config.yaml` 中调整模型大小或批次大小（batch size）
 - **改进**：添加更多训练数据或尝试不同的模型变体
+- **标注**：使用 `x-anylabeling-cu12` 环境启动 X-AnyLabeling 进行图像标注
 
 ## 常见问题与故障排除
 

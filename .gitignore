@@ -41,9 +41,13 @@ rknn-env/
 *.ipynb
 
 # Data (large files)
+datasets/calibration/
+datasets/cleaning/
 datasets/raw/
 datasets/videos/
+
 datasets/yolo_dataset/
+
 models/training_results/
 *.pt
 *.onnx

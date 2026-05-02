@@ -72,9 +72,10 @@ cd path/to/yolo-vision-pipeline-rknn
 # Activate the training environment
 conda activate rknn-yolov8-train
 
-# The setup script clones and installs both YOLO repos from source:
+# The setup script clones and installs both YOLO repos from source, plus X-AnyLabeling:
 # - rknn-yolov8-train for official Ultralytics training
 # - rknn-yolov8-export for Rockchip ONNX export
+# - x-anylabeling-cu12 for CUDA 12 labeling and annotation
 ```
 
 #### 2. Extract Frames from Videos (Optional)
