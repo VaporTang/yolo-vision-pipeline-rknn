@@ -190,11 +190,7 @@ If you want to use X-Anylabeling for AI-assisted annotation during data labeling
 $env:PYTHONPATH = ".\"
 
 # Export to X-Anylabeling models directory
-python src/export/1_pt_to_onnx.py `
-  --input models/best.pt `
-  --output tools/anylabeling/models/detection.onnx `
-  --imgsz 640 `
-  --simplify
+python src/export/1_pt_to_onnx.py --input models/best.pt --output tools/anylabeling/models/detection.onnx --imgsz 640 --simplify
 ```
 
 Then configure the model in X-Anylabeling:
@@ -232,10 +228,7 @@ source rknn-env/bin/activate
 
 ```bash
 # 20-30 representative training images for quantization
-python src/dataset_tools.py prepare_calibration \
-  --image-dir datasets/yolo_dataset/train/images \
-    --output datasets/calibration/dataset.txt \
-    --num-images 20
+python src/dataset_tools.py prepare_calibration --image-dir datasets/yolo_dataset/train/images --output datasets/calibration/dataset.txt --num-images 20
 ```
 
 #### 4. Convert ONNX to RKNN
@@ -379,28 +372,19 @@ python src/dataset_tools.py check_overlaps --json-dir path/to/annotations --thre
 ### Split Dataset into Train/Validation
 
 ```bash
-python src/dataset_tools.py split_dataset \
-    --image-dir datasets/yolo_dataset/train/images \
-    --label-dir datasets/yolo_dataset/train/labels \
-    --val-ratio 0.2
+python src/dataset_tools.py split_dataset --image-dir datasets/yolo_dataset/train/images --label-dir datasets/yolo_dataset/train/labels --val-ratio 0.2
 ```
 
 ### Remove Unused Classes
 
 ```bash
-python src/dataset_tools.py filter_classes \
-    --label-dirs datasets/yolo_dataset/train/labels \
-                   datasets/yolo_dataset/valid/labels \
-    --remove-classes 6 7 8
+python src/dataset_tools.py filter_classes --label-dirs datasets/yolo_dataset/train/labels datasets/yolo_dataset/valid/labels --remove-classes 6 7 8
 ```
 
 ### Prepare Calibration Dataset
 
 ```bash
-python src/dataset_tools.py prepare_calibration \
-    --image-dir datasets/yolo_dataset/train/images \
-    --output datasets/calibration/dataset.txt \
-    --num-images 20
+python src/dataset_tools.py prepare_calibration --image-dir datasets/yolo_dataset/train/images --output datasets/calibration/dataset.txt --num-images 20
 ```
 
 ## Complete Workflow Example
@@ -421,9 +405,7 @@ conda activate rknn-yolov8-train
 python src/train.py --epochs 300
 
 # Prepare calibration dataset (for quantization later)
-python src/dataset_tools.py prepare_calibration \
-    --image-dir datasets/yolo_dataset/train/images \
-    --output datasets/calibration/dataset.txt
+python src/dataset_tools.py prepare_calibration --image-dir datasets/yolo_dataset/train/images --output datasets/calibration/dataset.txt
 ```
 
 ### Step 3: Export to ONNX (Windows)
@@ -440,10 +422,7 @@ If you want to use AI-assisted annotation for future labeling tasks:
 ```powershell
 # Export model for X-Anylabeling
 $env:PYTHONPATH = ".\"
-python src/export/1_pt_to_onnx.py `
-  --input models/best.pt `
-  --output tools/anylabeling/models/detection.onnx `
-  --simplify
+python src/export/1_pt_to_onnx.py --input models/best.pt --output tools/anylabeling/models/detection.onnx --simplify
 
 # Launch X-Anylabeling and load the model
 # Menu → AI Features → Model Management → Add Model
@@ -543,9 +522,7 @@ python src/export/2_onnx_to_rknn.py --input /path/to/your/model.onnx
 **Solution**: Prepare it first:
 
 ```bash
-python src/dataset_tools.py prepare_calibration \
-    --image-dir your_training_images_dir \
-    --output datasets/calibration/dataset.txt
+python src/dataset_tools.py prepare_calibration --image-dir your_training_images_dir --output datasets/calibration/dataset.txt
 ```
 
 ### Out of Memory During Conversion
