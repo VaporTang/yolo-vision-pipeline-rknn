@@ -75,12 +75,6 @@ conda activate rknn-yolov8-train
 
 如果你有录制的视频文件，可以使用抽帧工具从视频中自动提取帧图像。
 
-首先安装依赖：
-
-```powershell
-pip install opencv-python
-```
-
 然后将视频放入 `datasets/videos/batch{N}/` 目录，使用以下命令抽帧：
 
 ```powershell
