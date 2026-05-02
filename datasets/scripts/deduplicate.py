@@ -302,7 +302,7 @@ def export_grouped_results(
 def launch_gui(groups, hashes, args, images_root, labels_root, src):
     try:
         from PySide6.QtCore import Qt, QUrl
-        from PySide6.QtGui import QColor, QDesktopServices, QPixmap
+        from PySide6.QtGui import QColor, QDesktopServices, QPixmap, QShortcut
         from PySide6.QtWidgets import (
             QApplication,
             QCheckBox,
@@ -315,13 +315,15 @@ def launch_gui(groups, hashes, args, images_root, labels_root, src):
             QMainWindow,
             QMessageBox,
             QPushButton,
-            QShortcut,
             QSizePolicy,
             QVBoxLayout,
             QWidget,
         )
-    except Exception:
-        print("未检测到 PySide6，请先安装: pip install PySide6", file=sys.stderr)
+    except Exception as exc:
+        print(
+            f"PySide6 加载失败: {exc!r}\n请先安装: pip install PySide6",
+            file=sys.stderr,
+        )
         sys.exit(2)
 
     class DedupReviewWindow(QMainWindow):
@@ -361,25 +363,24 @@ def launch_gui(groups, hashes, args, images_root, labels_root, src):
             right.addWidget(self.image_list, 2)
 
             decision_row = QHBoxLayout()
-            self.keep_button = QPushButton("Mark Keep")
+            self.keep_button = QPushButton("Keep (W)")
             self.keep_button.clicked.connect(lambda: self.set_decision("keep"))
             decision_row.addWidget(self.keep_button)
 
-            self.discard_button = QPushButton("Mark Discard")
+            self.discard_button = QPushButton("Discard (Q)")
             self.discard_button.clicked.connect(lambda: self.set_decision("discard"))
             decision_row.addWidget(self.discard_button)
 
-            self.clear_button = QPushButton("Clear Mark")
+            self.clear_button = QPushButton("Clear Mark (C)")
             self.clear_button.clicked.connect(lambda: self.set_decision(None))
             decision_row.addWidget(self.clear_button)
             right.addLayout(decision_row)
 
-            QShortcut("K", self, activated=lambda: self.set_decision("keep"))
-            QShortcut("D", self, activated=lambda: self.set_decision("discard"))
+            QShortcut("W", self, activated=lambda: self.set_decision("keep"))
+            QShortcut("Q", self, activated=lambda: self.set_decision("discard"))
             QShortcut("C", self, activated=lambda: self.set_decision(None))
-            QShortcut("Ctrl+K", self, activated=lambda: self.set_decision("keep"))
-            QShortcut("Ctrl+D", self, activated=lambda: self.set_decision("discard"))
-            QShortcut("Ctrl+Shift+C", self, activated=lambda: self.set_decision(None))
+            QShortcut("A", self, activated=self.select_previous)
+            QShortcut("D", self, activated=self.select_next)
 
             self.preview = QLabel("No image")
             self.preview.setAlignment(Qt.AlignCenter)
@@ -453,6 +454,9 @@ def launch_gui(groups, hashes, args, images_root, labels_root, src):
             group = self.current_group()
             if not group:
                 return
+            previous_scroll = self.image_list.verticalScrollBar().value()
+            previous_paths = set(self.selected_paths())
+            previous_current = self.current_selected_path()
             kept = self.selections.get(self.current_group_index, group[0])
             group_decisions = self.decisions.get(self.current_group_index, {})
             self.image_list.blockSignals(True)
@@ -472,7 +476,20 @@ def launch_gui(groups, hashes, args, images_root, labels_root, src):
                 elif path == kept:
                     item.setText(label + " | kept")
                 self.image_list.addItem(item)
-            self.image_list.setCurrentRow(0)
+            if previous_paths:
+                for row in range(self.image_list.count()):
+                    item = self.image_list.item(row)
+                    if item.data(Qt.UserRole) in previous_paths:
+                        item.setSelected(True)
+            if previous_current:
+                for row in range(self.image_list.count()):
+                    item = self.image_list.item(row)
+                    if item.data(Qt.UserRole) == previous_current:
+                        self.image_list.setCurrentRow(row)
+                        break
+            elif self.image_list.count() > 0:
+                self.image_list.setCurrentRow(0)
+            self.image_list.verticalScrollBar().setValue(previous_scroll)
             self.image_list.blockSignals(False)
             self.update_preview()
 
@@ -491,6 +508,16 @@ def launch_gui(groups, hashes, args, images_root, labels_root, src):
                 current = self.current_selected_path()
                 return [current] if current else []
             return [item.data(Qt.UserRole) for item in items]
+
+        def select_previous(self):
+            row = self.image_list.currentRow()
+            if row > 0:
+                self.image_list.setCurrentRow(row - 1)
+
+        def select_next(self):
+            row = self.image_list.currentRow()
+            if row < self.image_list.count() - 1:
+                self.image_list.setCurrentRow(row + 1)
 
         def update_preview(self):
             path = self.current_selected_path()
