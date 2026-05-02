@@ -42,6 +42,7 @@ rknn-env/
 
 # Data (large files)
 datasets/raw/
+datasets/videos/
 datasets/yolo_dataset/
 models/training_results/
 *.pt

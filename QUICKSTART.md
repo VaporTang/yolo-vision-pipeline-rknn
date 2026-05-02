@@ -82,10 +82,10 @@ conda activate rknn-yolov8-train
 python datasets/scripts/extract_frames.py --video datasets/videos/batch1/recording.mp4 --output datasets/raw/images/batch1 --every 30
 
 # 或者批量抽帧（按目录，自动保留 batch 子目录结构）
-python datasets/scripts/extract_frames.py --video-dir datasets/videos --output datasets/raw/images --every 15
+python datasets/scripts/extract_frames.py --video-dir datasets/videos --output datasets/raw/images --every 30
 
 # 自定义递归模式示例（例如只抽 avi）
-python datasets/scripts/extract_frames.py --video-dir datasets/videos --output datasets/raw/images --every 15 --pattern "**/*.avi"
+python datasets/scripts/extract_frames.py --video-dir datasets/videos --output datasets/raw/images --every 30 --pattern "**/*.avi"
 ```
 
 参数说明：
