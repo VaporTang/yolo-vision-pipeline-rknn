@@ -119,40 +119,29 @@ datasets/yolo_dataset/
 
 仓库提供了一个去重脚本：`datasets/scripts/deduplicate.py`，并附有使用说明 `datasets/cleaning/README.md`。
 
-示例（先预览，再移动重复项）：
+#### 示例命令
 
 ```powershell
-python datasets/scripts/deduplicate.py --src datasets/raw --dst datasets/cleaning/duplicates --threshold 5 --workers 0 --dry-run
-# 确认无误后再执行移动：
-python datasets/scripts/deduplicate.py --src datasets/raw --dst datasets/cleaning/duplicates --threshold 5 --workers 4 --move
+# 预览（不移动/复制）
+python datasets/scripts/deduplicate.py --src datasets/raw --dst datasets/cleaning/duplicates --threshold 4 --workers 0 --dry-run
+
+# 确认后移动重复项
+python datasets/scripts/deduplicate.py --src datasets/raw --dst datasets/cleaning/duplicates --threshold 4 --workers -4 --move
 ```
 
-速度提示：
+#### GUI 人工审核
 
-- `--workers N` 可并行计算哈希（`0` 表示单进程，推荐 4~12 之间按机器调整）。
-- `--workers -1` 表示使用 `CPU 核心数 - 1`（给系统预留资源）。
-
-建议流程：
-
-- 将原始图片与标签放到 `datasets/raw`。
-- 运行去重脚本并检查 `datasets/cleaning/duplicates`。
-- 将清洗后的数据组织到 `datasets/yolo_dataset/train` 和 `datasets/yolo_dataset/valid`。
-
-在 `configs/data.yaml` 中更新你的类别信息：
-
-```yaml
-path: datasets/yolo_dataset
-train: datasets/yolo_dataset/train/images
-val: datasets/yolo_dataset/valid/images
-nc: 6
-names:
-  0: yellow_ball
-  1: blue_ball
-  2: red_ball
-  3: black_ball
-  4: blue_placement_zone
-  5: red_placement_zone
+```powershell
+python datasets/scripts/deduplicate.py --src datasets/raw --dst datasets/cleaning/duplicates --gui
 ```
+
+GUI 会将相似图分组显示，并支持选择保留图后按组导出（每组包含 images/ 和 labels/）。
+
+#### 参数说明
+
+- `--threshold N`: 设置重复检测的敏感度，值越小越严格。
+- `--workers N`: 并行计算线程数，`0` 表示单线程，`-1` 表示使用 CPU 核心数减 1。
+- `--gui`: 启动图形界面模式，便于人工审核。
 
 ## 第四步：训练模型（1到数小时不等，取决于数据量）
 

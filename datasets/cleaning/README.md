@@ -21,10 +21,10 @@ datasets/raw/
 
 ```bash
 # 预览（不移动/复制）
-python datasets/scripts/deduplicate.py --src datasets/raw --images-subdir images --labels-subdir labels --dst datasets/cleaning/duplicates --threshold 5 --workers 0 --dry-run
+python datasets/scripts/deduplicate.py --src datasets/raw --images-subdir images --labels-subdir labels --dst datasets/cleaning/duplicates --threshold 4 --workers 0 --dry-run
 
 # 确认后移动重复项
-python datasets/scripts/deduplicate.py --src datasets/raw --images-subdir images --labels-subdir labels --dst datasets/cleaning/duplicates --threshold 5 --workers 4 --move
+python datasets/scripts/deduplicate.py --src datasets/raw --images-subdir images --labels-subdir labels --dst datasets/cleaning/duplicates --threshold 4 --workers -4 --move
 ```
 
 速度提示:

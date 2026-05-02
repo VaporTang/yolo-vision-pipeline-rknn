@@ -108,19 +108,21 @@ See `datasets/videos/README.md` for detailed options.
 #       └── img_val1.txt, ...
 ```
 
-#### 数据清洗（可选但推荐）
+### 数据清洗（去重工具）
 
 为了减少训练集中的冗余样本，建议在整理 `datasets/yolo_dataset` 前先对 `datasets/raw` 进行去重与清洗。仓库包含去重工具：`datasets/scripts/deduplicate.py`。
 
-示例命令（先用 `--dry-run` 预览）：
+#### 示例命令
 
 ```bash
-python datasets/scripts/deduplicate.py --src datasets/raw --images-subdir images --labels-subdir labels --dst datasets/cleaning/duplicates --threshold 5 --workers 0 --dry-run
+# 预览（不移动/复制）
+python datasets/scripts/deduplicate.py --src datasets/raw --images-subdir images --labels-subdir labels --dst datasets/cleaning/duplicates --threshold 4 --workers 0 --dry-run
+
+# 确认后移动重复项
+python datasets/scripts/deduplicate.py --src datasets/raw --images-subdir images --labels-subdir labels --dst datasets/cleaning/duplicates --threshold 4 --workers -4 --move
 ```
 
-确认后可以使用 `--move` 将重复项移动到目标目录以便人工复核。
-
-GUI 人工审核（按相似组打包导出）：
+#### GUI 人工审核
 
 ```bash
 python datasets/scripts/deduplicate.py --src datasets/raw --dst datasets/cleaning/duplicates --gui
@@ -128,10 +130,11 @@ python datasets/scripts/deduplicate.py --src datasets/raw --dst datasets/cleanin
 
 GUI 会将相似图分组显示，并支持选择保留图后按组导出（每组包含 images/ 和 labels/）。
 
-速度提示：
+#### 参数说明
 
-- `--workers N` 可并行计算哈希（`0` 表示单进程，推荐 4~12 之间按机器调整）。
-- `--workers -1` 表示使用 `CPU 核心数 - 1`（给系统预留资源）。
+- `--threshold N`: 设置重复检测的敏感度，值越小越严格。
+- `--workers N`: 并行计算线程数，`0` 表示单线程，`-1` 表示使用 CPU 核心数减 1。
+- `--gui`: 启动图形界面模式，便于人工审核。
 
 #### 3. Train a Model
 
