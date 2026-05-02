@@ -8,6 +8,14 @@ onnx_export:
   # Output ONNX model path
   output_onnx: models/best.onnx
 
+  # Export purpose:
+  # - rknn: ONNX for RKNN conversion (Rockchip backend expected)
+  # - anylabeling: ONNX for X-Anylabeling (official Ultralytics expected)
+  purpose: rknn
+
+  # If true, abort when current backend does not match export purpose
+  strict_backend_check: true
+
   # Model settings
   imgsz: 640 # Input image size
 
@@ -22,4 +30,4 @@ onnx_export:
   device: 0 # GPU device (0 for first GPU, -1 for CPU)
 
 # Note: This script uses the Rockchip-customized ultralytics_yolov8
-# which strips unsupported post-processing operations for NPU
+# for RKNN path, while X-Anylabeling export should use official ultralytics

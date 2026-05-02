@@ -34,10 +34,10 @@ conda activate rknn-yolov8-train
 $env:PYTHONPATH = ".\"
 
 # 运行导出脚本
-python src/export/1_pt_to_onnx.py --config configs/export_config.yaml
+python src/export/1_pt_to_onnx.py --purpose anylabeling --config configs/export_config.yaml
 
 # 或指定特定的 pt 模型
-python src/export/1_pt_to_onnx.py --input models/best.pt --output tools/anylabeling/models/detection.onnx
+python src/export/1_pt_to_onnx.py --purpose anylabeling --input models/best.pt --output tools/anylabeling/models/detection.onnx
 ```
 
 **输出**: `tools/anylabeling/models/detection.onnx`
@@ -63,6 +63,12 @@ onnx_export:
   
   # 输出 ONNX 模型路径（用于 X-Anylabeling）
   output_onnx: tools/anylabeling/models/detection.onnx
+
+  # 导出用途（X-Anylabeling 必须使用 official 后端）
+  purpose: anylabeling
+
+  # 后端不匹配时直接中止
+  strict_backend_check: true
   
   # 模型输入尺寸
   imgsz: 640
@@ -232,7 +238,7 @@ $env:PYTHONPATH = ".\"
 python src/train.py --epochs 300 --data configs/data.yaml
 
 # 2. 导出为 ONNX
-python src/export/1_pt_to_onnx.py --input models/best.pt --output tools/anylabeling/models/detection.onnx
+python src/export/1_pt_to_onnx.py --purpose anylabeling --input models/best.pt --output tools/anylabeling/models/detection.onnx
 
 # 3. 在 X-Anylabeling 中重新加载模型
 ```

@@ -172,11 +172,14 @@ The best model will be saved to `models/best.pt`.
 #### 4. Export to ONNX
 
 ```powershell
+# Switch to Rockchip export environment (important)
+conda activate rknn-yolov8-export
+
 # Set PYTHONPATH (important!)
 $env:PYTHONPATH = ".\"
 
 # Run export
-python src/export/1_pt_to_onnx.py --config configs/export_config.yaml
+python src/export/1_pt_to_onnx.py --purpose rknn --config configs/export_config.yaml
 ```
 
 Output: `models/best.onnx`
@@ -186,11 +189,14 @@ Output: `models/best.onnx`
 If you want to use X-Anylabeling for AI-assisted annotation during data labeling, export the model to the anylabeling tools directory:
 
 ```powershell
+# Switch to official training environment (important)
+conda activate rknn-yolov8-train
+
 # Set PYTHONPATH (important!)
 $env:PYTHONPATH = ".\"
 
 # Export to X-Anylabeling models directory
-python src/export/1_pt_to_onnx.py --input models/best.pt --output tools/anylabeling/models/detection.onnx --imgsz 640 --simplify
+python src/export/1_pt_to_onnx.py --purpose anylabeling --input models/best.pt --output tools/anylabeling/models/detection.onnx --imgsz 640 --simplify
 ```
 
 Then configure the model in X-Anylabeling:
@@ -341,6 +347,8 @@ training:
 onnx_export:
   input_model: models/best.pt
   output_onnx: models/best.onnx
+  purpose: rknn            # rknn or anylabeling
+  strict_backend_check: true
   imgsz: 640
   opset_version: 13
   simplify: true             # Use onnxsim for optimization
@@ -411,8 +419,11 @@ python src/dataset_tools.py prepare_calibration --image-dir datasets/yolo_datase
 ### Step 3: Export to ONNX (Windows)
 
 ```powershell
+# Use Rockchip export environment for RKNN path
+conda activate rknn-yolov8-export
+
 $env:PYTHONPATH = ".\"
-python src/export/1_pt_to_onnx.py
+python src/export/1_pt_to_onnx.py --purpose rknn
 ```
 
 ### Step 3.5: (Optional) Setup X-Anylabeling for AI-Assisted Annotation
@@ -420,9 +431,12 @@ python src/export/1_pt_to_onnx.py
 If you want to use AI-assisted annotation for future labeling tasks:
 
 ```powershell
+# Use official Ultralytics environment for X-Anylabeling path
+conda activate rknn-yolov8-train
+
 # Export model for X-Anylabeling
 $env:PYTHONPATH = ".\"
-python src/export/1_pt_to_onnx.py --input models/best.pt --output tools/anylabeling/models/detection.onnx --simplify
+python src/export/1_pt_to_onnx.py --purpose anylabeling --input models/best.pt --output tools/anylabeling/models/detection.onnx --simplify
 
 # Launch X-Anylabeling and load the model
 # Menu → AI Features → Model Management → Add Model
