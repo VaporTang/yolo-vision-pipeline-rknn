@@ -451,7 +451,7 @@ python src/export/1_pt_to_onnx.py `
 
 For more details, see [tools/anylabeling/README.md](tools/anylabeling/README.md).
 
-### Step 4: Convert to RKNN (Ubuntu/WSL)
+### Step 5: Convert to RKNN (Ubuntu/WSL)
 
 ```bash
 # In Ubuntu/WSL terminal
