@@ -1,0 +1,2 @@
+# This file ensures the models directory is tracked by git
+# Place your ONNX model files here for X-Anylabeling

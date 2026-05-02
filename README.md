@@ -51,6 +51,11 @@ yolo-vision-pipeline-rknn/
 │   │   └── 2_onnx_to_rknn.py     # .onnx → .rknn conversion
 │   └── utils/                    # Utility modules
 │       └── dataset_utils.py      # Dataset manipulation functions
+├── tools/                        # Utility tools
+│   └── anylabeling/              # X-Anylabeling AI annotation tools
+│       ├── models/               # ONNX models for AI annotation
+│       ├── configs/              # X-Anylabeling model configurations
+│       └── README.md             # X-Anylabeling setup guide
 ├── docs/                         # Documentation
 ├── setup_win.ps1                 # Windows setup script
 └── setup_wsl.sh                  # Ubuntu/WSL setup script
@@ -175,6 +180,31 @@ python src/export/1_pt_to_onnx.py --config configs/export_config.yaml
 ```
 
 Output: `models/best.onnx`
+
+#### 5. (Optional) Export to ONNX for X-Anylabeling AI Annotation
+
+If you want to use X-Anylabeling for AI-assisted annotation during data labeling, export the model to the anylabeling tools directory:
+
+```powershell
+# Set PYTHONPATH (important!)
+$env:PYTHONPATH = ".\"
+
+# Export to X-Anylabeling models directory
+python src/export/1_pt_to_onnx.py `
+  --input models/best.pt `
+  --output tools/anylabeling/models/detection.onnx `
+  --imgsz 640 `
+  --simplify
+```
+
+Then configure the model in X-Anylabeling:
+
+1. Launch **X-Anylabeling**
+2. Go to **Menu** → **AI Features** → **Model Management**
+3. Add the model: `tools/anylabeling/models/detection.onnx`
+4. Use **Auto Label** feature for AI-assisted annotation
+
+For detailed X-Anylabeling setup and configuration, see [tools/anylabeling/README.md](tools/anylabeling/README.md).
 
 ### Ubuntu/WSL: ONNX to RKNN Conversion
 
@@ -402,6 +432,24 @@ python src/dataset_tools.py prepare_calibration \
 $env:PYTHONPATH = ".\"
 python src/export/1_pt_to_onnx.py
 ```
+
+### Step 3.5: (Optional) Setup X-Anylabeling for AI-Assisted Annotation
+
+If you want to use AI-assisted annotation for future labeling tasks:
+
+```powershell
+# Export model for X-Anylabeling
+$env:PYTHONPATH = ".\"
+python src/export/1_pt_to_onnx.py `
+  --input models/best.pt `
+  --output tools/anylabeling/models/detection.onnx `
+  --simplify
+
+# Launch X-Anylabeling and load the model
+# Menu → AI Features → Model Management → Add Model
+```
+
+For more details, see [tools/anylabeling/README.md](tools/anylabeling/README.md).
 
 ### Step 4: Convert to RKNN (Ubuntu/WSL)
 

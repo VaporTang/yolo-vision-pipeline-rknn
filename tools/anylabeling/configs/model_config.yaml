@@ -1,0 +1,146 @@
+# X-Anylabeling YOLO 模型配置文件
+# 用于配置 ONNX 模型在 X-Anylabeling 中的行为
+
+model:
+  # 模型基本信息
+  name: "YOLO v8 Detection Model"
+  type: "object_detection"
+  framework: "onnx"
+  version: "1.0"
+  
+  # 模型文件路径（相对于此配置文件或绝对路径）
+  path: "../models/detection.onnx"
+  
+  # ============================================================================
+  # 输入配置
+  # ============================================================================
+  input:
+    # 模型输入图像尺寸
+    size: 640
+    
+    # 通道数（RGB 为 3）
+    channels: 3
+    
+    # 颜色格式
+    format: "RGB"
+    
+    # 是否进行归一化
+    normalize: true
+    
+    # 归一化参数（如果 normalize=true）
+    # 标准做法：(image / 255.0) - mean) / std
+    mean: [0.0, 0.0, 0.0]
+    std: [1.0, 1.0, 1.0]
+  
+  # ============================================================================
+  # 输出配置
+  # ============================================================================
+  output:
+    # YOLO 输出格式
+    # 标准 YOLO 格式：[batch_size, num_detections, 5+num_classes]
+    # 每个检测：[x_center, y_center, width, height, confidence, class_0_prob, class_1_prob, ...]
+    format: "yolo"
+    
+    # 类别数量
+    num_classes: 6
+    
+    # 类别名称（必须与训练配置一致）
+    class_names:
+      0: "yellow_ball"
+      1: "blue_ball"
+      2: "red_ball"
+      3: "black_ball"
+      4: "blue_placement_zone"
+      5: "red_placement_zone"
+    
+    # 类别颜色（用于可视化）
+    class_colors:
+      0: [255, 255, 0]        # 黄色
+      1: [0, 0, 255]          # 蓝色
+      2: [255, 0, 0]          # 红色
+      3: [0, 0, 0]            # 黑色
+      4: [100, 100, 255]      # 浅蓝色
+      5: [255, 100, 100]      # 浅红色
+  
+  # ============================================================================
+  # 推理配置
+  # ============================================================================
+  inference:
+    # 置信度阈值（0.0 - 1.0）
+    # 置信度低于该值的检测将被过滤
+    confidence_threshold: 0.5
+    
+    # IOU（IoU）阈值，用于 NMS（非极大值抑制）
+    # 用于去除重叠的检测框
+    iou_threshold: 0.45
+    
+    # 最大检测数量
+    max_detections: 300
+    
+    # ONNX Runtime 执行提供者（按优先级排列）
+    # 可用选项：
+    #   - CUDAExecutionProvider (NVIDIA GPU)
+    #   - TensorrtExecutionProvider (TensorRT)
+    #   - CPUExecutionProvider (CPU)
+    #   - CoreMLExecutionProvider (Apple)
+    execution_providers:
+      - CUDAExecutionProvider
+      - CPUExecutionProvider
+  
+  # ============================================================================
+  # 性能配置
+  # ============================================================================
+  performance:
+    # 最大批处理大小
+    max_batch_size: 1
+    
+    # 使用半精度浮点（FP16）
+    # 注意：需要 GPU 支持，可以加速推理但可能降低精度
+    use_fp16: false
+    
+    # 启用模型缓存
+    enable_cache: true
+    
+    # 线程数（仅适用于 CPU）
+    num_threads: -1  # -1 表示使用所有可用核心
+  
+  # ============================================================================
+  # 数据增强配置（标注时的数据处理）
+  # ============================================================================
+  augmentation:
+    # 是否自动调整亮度
+    auto_adjust_brightness: true
+    
+    # 是否进行对比度调整
+    auto_contrast: false
+  
+  # ============================================================================
+  # 后处理配置
+  # ============================================================================
+  post_processing:
+    # 是否应用 NMS（非极大值抑制）
+    apply_nms: true
+    
+    # 是否裁剪超出边界的框
+    clip_boxes: true
+    
+    # 框坐标格式
+    # "xyxy": [x1, y1, x2, y2] (左上角 + 右下角)
+    # "xywh": [x_center, y_center, width, height]
+    box_format: "xyxy"
+  
+  # ============================================================================
+  # 标注输出配置
+  # ============================================================================
+  annotation:
+    # 输出格式
+    # "yolo": YOLO 格式 (x_center, y_center, width, height, class_id) [0-1]
+    # "pascal_voc": Pascal VOC 格式 (x1, y1, x2, y2, class_id) [像素值]
+    # "coco": COCO 格式 (x, y, width, height, class_id) [像素值]
+    output_format: "yolo"
+    
+    # 是否保存置信度分数
+    save_confidence: false
+    
+    # 置信度的保留小数位数
+    confidence_decimal_places: 2

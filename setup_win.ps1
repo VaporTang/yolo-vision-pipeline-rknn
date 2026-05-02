@@ -89,41 +89,8 @@ EnsureCondaEnv $labelEnvName "3.12"
 InstallSharedDeps $trainEnvName
 InstallSharedDeps $exportEnvName
 
-# 为 X-AnyLabeling 环境创建激活后脚本以配置 CUDA 库路径
-function SetupCondaActivationHook($envName) {
-    Write-Host "Setting up activation hook for '$envName'..." -ForegroundColor Cyan
-    
-    # 获取 conda 环境路径
-    $envPath = & conda run -n $envName --no-capture-output python -c "import sys; print(sys.prefix)"
-    
-    # 创建激活脚本目录
-    $activateDir = Join-Path $envPath "etc" "conda" "activate.d"
-    if (-not (Test-Path $activateDir)) {
-        New-Item -ItemType Directory -Force -Path $activateDir | Out-Null
-    }
-    
-    # 创建 PowerShell 激活脚本
-    $psActivateScript = Join-Path $activateDir "cuda-path.ps1"
-    $psContent = @"
-# Automatically add CUDA library paths to PATH
-`$env:PATH = "`$env:CONDA_PREFIX\Library\bin;" + `$env:PATH
-`$env:PATH = "`$env:CONDA_PREFIX\bin;" + `$env:PATH
-"@
-    Set-Content -Path $psActivateScript -Value $psContent -Encoding UTF8
-    
-    # 创建 CMD 激活脚本
-    $cmdActivateScript = Join-Path $activateDir "cuda-path.bat"
-    $cmdContent = @"
-@echo off
-set "PATH=%CONDA_PREFIX%\Library\bin;%PATH%"
-set "PATH=%CONDA_PREFIX%\bin;%PATH%"
-"@
-    Set-Content -Path $cmdActivateScript -Value $cmdContent -Encoding UTF8
-    
-    Write-Host "✅ Activation hooks created`n" -ForegroundColor Green
-}
-
-SetupCondaActivationHook $labelEnvName
+# CUDA DLLs from pip-installed NVIDIA packages are not placed in Library\bin.
+# We copy them there after install to ensure they are discoverable on Windows.
 
 # 3. 克隆并安装官方 YOLO（训练环境）
 Write-Host "Setting up official Ultralytics YOLO for '$trainEnvName'..." -ForegroundColor Cyan
@@ -212,9 +179,25 @@ try {
     & conda run -n $labelEnvName --no-capture-output pip install -e ".[gpu]"
     if ($LASTEXITCODE -ne 0) { Fail "Failed to install X-AnyLabeling in '$labelEnvName' (exit $LASTEXITCODE)" }
 
-    Write-Host "  Installing NVIDIA CUDA packages (cublas and cudnn)..." -ForegroundColor Cyan
-    & conda run -n $labelEnvName --no-capture-output pip install nvidia-cublas-cu12 nvidia-cudnn-cu12
+    Write-Host "  Installing NVIDIA CUDA packages..." -ForegroundColor Cyan
+    & conda run -n $labelEnvName --no-capture-output pip install nvidia-cublas-cu12 nvidia-cudnn-cu12 nvidia-cufft-cu12 nvidia-curand-cu12 nvidia-cusolver-cu12 nvidia-cusparse-cu12 nvidia-cuda-runtime-cu12 nvidia-cuda-nvrtc-cu12
     if ($LASTEXITCODE -ne 0) { Fail "Failed to install NVIDIA CUDA packages in '$labelEnvName' (exit $LASTEXITCODE)" }
+
+    Write-Host "  Extracting NVIDIA DLLs to Conda Library/bin..." -ForegroundColor Cyan
+    $envPath = & conda run -n $labelEnvName --no-capture-output python -c "import sys; print(sys.prefix)"
+    $nvidiaDir = Join-Path $envPath "Lib" "site-packages" "nvidia"
+    $targetDir = Join-Path $envPath "Library" "bin"
+
+    if (Test-Path $nvidiaDir) {
+        if (-not (Test-Path $targetDir)) {
+            New-Item -ItemType Directory -Force -Path $targetDir | Out-Null
+        }
+        Get-ChildItem -Path $nvidiaDir -Filter "*.dll" -Recurse | Copy-Item -Destination $targetDir -Force
+        Write-Host "  ✅ Successfully copied NVIDIA DLLs" -ForegroundColor Green
+    }
+    else {
+        Write-Host "  ⚠️ Warning: Could not find nvidia packages directory" -ForegroundColor Yellow
+    }
 }
 finally { Pop-Location }
 
