@@ -31,3 +31,17 @@ python datasets/scripts/deduplicate.py --src datasets/raw --images-subdir images
 
 - `--workers N` 可并行计算哈希（`0` 表示单进程，推荐 4~12 之间按机器调整）。
 - `--workers -1` 表示使用 `CPU 核心数 - 1`（给系统预留资源）。
+
+#### GUI 人工审核
+
+如果需要更直观地查看和管理重复图像，可以使用 GUI 模式：
+
+```bash
+python datasets/scripts/deduplicate.py --src datasets/raw --dst datasets/cleaning/duplicates --gui --threshold 4
+```
+
+GUI 会将相似图分组显示，并支持选择保留图后按组导出（每组包含 images/ 和 labels/）
+
+#### 参数说明
+
+- `--threshold N`: 设置重复检测的敏感度，值越小越严格，GUI 模式下也支持此参数。
