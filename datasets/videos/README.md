@@ -27,11 +27,8 @@ pip install opencv-python
 
 ### 单个视频抽帧
 
-```bash
-python datasets/scripts/extract_frames.py \
-    --video datasets/videos/batch1/recording_1.mp4 \
-    --output datasets/raw/images/batch1 \
-    --every 30
+```powershell
+python datasets/scripts/extract_frames.py --video datasets/videos/batch1/recording_1.mp4 --output datasets/raw/images/batch1 --every 30
 ```
 
 - `--video`: 视频文件路径
@@ -40,23 +37,34 @@ python datasets/scripts/extract_frames.py \
 
 ### 批量抽帧
 
-```bash
-python datasets/scripts/extract_frames.py \
-    --video-dir datasets/videos \
-    --output datasets/raw/images \
-    --batch-prefix batch1 \
-    --every 15 \
-    --pattern "*.mp4"
+```powershell
+python datasets/scripts/extract_frames.py --video-dir datasets/videos --output datasets/raw/images --every 15 --pattern "**/*.mp4"
 ```
 
 - `--video-dir`: 存放视频的目录
-- `--batch-prefix`: 输出文件名前缀（可选）
-- `--pattern`: 查找视频文件的模式（默认 `*.mp4`，支持 `*.avi`, `*.mov` 等）
+- `--batch-prefix`: 输出文件名前缀（可选）。设置后，单视频目录下输出为 `{batch_prefix}_{frame_id}`；同目录多视频时自动追加视频名避免重名
+- `--pattern`: 查找视频文件的模式（默认 `**/*.mp4`，递归查找，支持 `*.avi`, `*.mov` 等）
 - `--every`: 抽取频率
 
 ### 输出格式
 
-抽取的帧会以 `{video_name}_{frame_id:06d}.jpg` 的格式保存，例如：
+目录模式下会保留输入视频的相对子目录结构，例如：
+
+- `datasets/videos/batch1/recording_1.mp4` -> `datasets/raw/images/batch1/`
+- `datasets/videos/batch2/recording_a.mp4` -> `datasets/raw/images/batch2/`
+
+默认命名规则：
+
+- 子目录下单个视频：`{batch_name}_{frame_id:06d}.jpg`
+- 子目录下多个视频：`{batch_name}_{video_name}_{frame_id:06d}.jpg`
+
+例如：
+
+- `batch1_000000.jpg`
+- `batch1_000030.jpg`
+- `batch1_recording_2_000000.jpg`
+
+单视频模式（`--video`）下，默认命名仍为 `{video_name}_{frame_id:06d}.jpg`，例如：
 
 - `recording_1_000000.jpg`
 - `recording_1_000030.jpg`

@@ -88,9 +88,19 @@ pip install opencv-python
 # Single video extraction (every 30 frames)
 python datasets/scripts/extract_frames.py --video datasets/videos/batch1/recording.mp4 --output datasets/raw/images/batch1 --every 30
 
-# Or batch extraction from directory
-python datasets/scripts/extract_frames.py --video-dir datasets/videos --output datasets/raw/images --batch-prefix batch1 --every 15
+# Or batch extraction from directory (preserve subfolder structure)
+python datasets/scripts/extract_frames.py --video-dir datasets/videos --output datasets/raw/images --every 15
+
+# Custom recursive pattern example (avi)
+python datasets/scripts/extract_frames.py --video-dir datasets/videos --output datasets/raw/images --every 15 --pattern "**/*.avi"
 ```
+
+In directory mode, extracted frames keep the relative folder layout. For example:
+
+- `datasets/videos/batch1/*.mp4` -> `datasets/raw/images/batch1/`
+- `datasets/videos/batch2/*.mp4` -> `datasets/raw/images/batch2/`
+
+Default file discovery pattern is `**/*.mp4` (recursive).
 
 See `datasets/videos/README.md` for detailed options.
 

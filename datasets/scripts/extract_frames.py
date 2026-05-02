@@ -16,6 +16,8 @@ import os
 import sys
 import cv2
 from pathlib import Path
+import math
+from collections import Counter
 
 
 def extract_frames_from_video(
@@ -61,7 +63,7 @@ def extract_frames_from_video(
 
     print(f"视频: {os.path.basename(video_path)} ({total_frames} 帧, {fps:.2f} fps)")
     print(
-        f"抽取策略: 每 {every_n_frames} 帧抽取一次 -> {total_frames // every_n_frames} 帧"
+        f"抽取策略: 每 {every_n_frames} 帧抽取一次 -> {math.ceil(total_frames / every_n_frames)} 帧"
     )
 
     while True:
@@ -94,8 +96,8 @@ def extract_frames_from_directory(
         video_dir: 视频文件所在目录
         output_dir: 输出目录
         every_n_frames: 每隔多少帧抽取一次
-        batch_prefix: 输出文件名前缀，若设置则为 {batch_prefix}_{video_name}_{frame_id}
-        pattern: 文件模式，默认 *.mp4
+        batch_prefix: 输出文件名前缀，若设置则为 {batch_prefix}_{frame_id}，同目录多视频时自动追加视频名
+        pattern: 文件模式，默认 **/*.mp4（递归查找）
 
     Returns:
         int: 总共保存的帧数
@@ -107,10 +109,12 @@ def extract_frames_from_directory(
         return 0
 
     if pattern is None:
-        pattern = "*.mp4"
+        pattern = "**/*.mp4"
 
     # 查找视频文件
-    video_files = sorted(Path(video_dir).glob(pattern))  # 包括 **/*.mp4 递归查找
+    video_dir_path = Path(video_dir)
+    output_root = Path(output_dir).resolve()
+    video_files = sorted(video_dir_path.glob(pattern))
 
     if not video_files:
         print(f"在 {video_dir} 中未找到视频文件（模式: {pattern}）", file=sys.stderr)
@@ -120,19 +124,36 @@ def extract_frames_from_directory(
     print()
 
     total_saved = 0
+    parent_counts = Counter(
+        str(video_file.parent.relative_to(video_dir_path)) for video_file in video_files
+    )
 
     for video_file in video_files:
         video_path = str(video_file)
         video_name = video_file.stem
+        rel_parent = video_file.parent.relative_to(video_dir_path)
+
+        if rel_parent == Path("."):
+            target_output_dir = output_root
+        else:
+            target_output_dir = output_root / rel_parent
+
+        same_parent_count = parent_counts[str(rel_parent)]
 
         if batch_prefix:
-            # 使用 batch_prefix + video_name 作为文件名前缀
-            prefix = f"{batch_prefix}_{video_name}"
+            prefix = batch_prefix
+            if same_parent_count > 1:
+                prefix = f"{batch_prefix}_{video_name}"
         else:
-            prefix = video_name
+            if rel_parent == Path("."):
+                prefix = video_name
+            else:
+                prefix = rel_parent.name
+                if same_parent_count > 1:
+                    prefix = f"{rel_parent.name}_{video_name}"
 
         saved = extract_frames_from_video(
-            video_path, output_dir, every_n_frames, prefix
+            video_path, str(target_output_dir), every_n_frames, prefix
         )
         total_saved += saved
 
@@ -169,8 +190,8 @@ def main():
     )
     p.add_argument(
         "--pattern",
-        default="*.mp4",
-        help="查找视频文件的模式（默认 *.mp4，支持 *.avi, *.mov 等）",
+        default="**/*.mp4",
+        help="查找视频文件的模式（默认 **/*.mp4，递归查找，支持 *.avi, *.mov 等）",
     )
 
     args = p.parse_args()

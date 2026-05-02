@@ -81,15 +81,20 @@ conda activate rknn-yolov8-train
 # 单个视频抽帧（每隔 30 帧取一帧）
 python datasets/scripts/extract_frames.py --video datasets/videos/batch1/recording.mp4 --output datasets/raw/images/batch1 --every 30
 
-# 或者批量抽帧（按目录）
-python datasets/scripts/extract_frames.py --video-dir datasets/videos --output datasets/raw/images --batch-prefix batch1 --every 15
+# 或者批量抽帧（按目录，自动保留 batch 子目录结构）
+python datasets/scripts/extract_frames.py --video-dir datasets/videos --output datasets/raw/images --every 15
+
+# 自定义递归模式示例（例如只抽 avi）
+python datasets/scripts/extract_frames.py --video-dir datasets/videos --output datasets/raw/images --every 15 --pattern "**/*.avi"
 ```
 
 参数说明：
 
 - `--every N`: 每隔 N 帧抽取 1 帧。若视频是 30fps，`--every 30` 表示每秒 1 帧；`--every 15` 表示每秒 2 帧。
-- `--batch-prefix`: 输出文件名前缀（可选）。
-- `--pattern`: 查找视频的文件模式，默认 `*.mp4`，也支持 `*.avi` 等。
+- `--batch-prefix`: 输出文件名前缀（可选）。设置后，单视频目录下输出为 `{batch_prefix}_{frame_id}`；同目录多视频时自动追加视频名避免重名。
+- `--pattern`: 查找视频的文件模式，默认 `**/*.mp4`（递归查找），也支持 `**/*.avi`、`**/*.mov` 等。
+
+批量模式会将 `datasets/videos/batch1/*.mp4` 输出到 `datasets/raw/images/batch1/`，`batch2` 同理。
 
 详见 `datasets/videos/README.md`。
 
