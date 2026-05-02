@@ -548,6 +548,155 @@ rknn_conversion:
   optimization_level: 1  # Instead of 3
 ```
 
+## 常用命令
+
+### Windows PowerShell 操作
+
+#### 清理临时文件和缓存
+
+```powershell
+# 删除所有 .json 文件
+Remove-Item -Path *.json
+
+# 删除所有 .json 文件（递归，当前目录及子目录）
+Remove-Item -Path *.json -Recurse
+
+# 删除 __pycache__ 目录（清理 Python 缓存）
+Remove-Item -Path __pycache__ -Recurse -Force
+
+# 删除所有 .pyc 文件
+Remove-Item -Path *.pyc -Recurse
+
+# 删除 .egg-info 目录
+Remove-Item -Path *.egg-info -Recurse -Force
+
+# 删除指定目录下的所有日志文件
+Remove-Item -Path "logs/*.log"
+
+# 安全删除模型文件（删除前确认）
+Remove-Item -Path models/*.pt -WhatIf  # 预览，不实际删除
+Remove-Item -Path models/*.pt          # 确认后执行
+```
+
+#### 查看文件和目录
+
+```powershell
+# 查看当前目录的所有文件和文件夹
+Get-ChildItem
+
+# 查看指定目录下所有 .pt 文件
+Get-ChildItem -Path models -Filter "*.pt"
+
+# 查看递归搜索所有 .onnx 文件
+Get-ChildItem -Path . -Filter "*.onnx" -Recurse
+
+# 查看目录大小
+Get-ChildItem -Path models | Measure-Object -Property Length -Sum
+```
+
+#### 文件操作
+
+```powershell
+# 复制整个目录
+Copy-Item -Path datasets/raw -Destination datasets/backup -Recurse
+
+# 移动文件
+Move-Item -Path models/old_model.pt -Destination models/archive/
+
+# 创建目录
+New-Item -ItemType Directory -Path datasets/new_folder
+
+# 查看文件内容
+Get-Content configs/data.yaml
+```
+
+### Ubuntu/WSL Bash 操作
+
+#### 清理临时文件和缓存
+
+```bash
+# 删除所有 .json 文件
+rm *.json
+
+# 删除所有 .json 文件（递归）
+find . -name "*.json" -delete
+
+# 删除 __pycache__ 目录
+find . -type d -name __pycache__ -exec rm -rf {} +
+
+# 删除所有 .pyc 文件
+find . -name "*.pyc" -delete
+
+# 删除 .egg-info 目录
+find . -type d -name "*.egg-info" -exec rm -rf {} +
+
+# 删除指定目录下的日志文件
+rm -f logs/*.log
+```
+
+#### 查看文件和目录
+
+```bash
+# 列出当前目录所有文件
+ls -la
+
+# 查看指定目录下所有 .pt 文件
+ls -la models/*.pt
+
+# 递归搜索所有 .onnx 文件
+find . -name "*.onnx"
+
+# 查看目录大小
+du -sh models/
+du -sh datasets/
+```
+
+#### 文件操作
+
+```bash
+# 复制整个目录
+cp -r datasets/raw datasets/backup
+
+# 移动文件
+mv models/old_model.pt models/archive/
+
+# 创建目录
+mkdir -p datasets/new_folder
+
+# 查看文件内容
+cat configs/data.yaml
+```
+
+### 环境管理
+
+```powershell
+# Windows - 列出所有 conda 环境
+conda env list
+
+# Windows - 查看当前环境的包
+conda list
+
+# Windows - 升级 pip
+python -m pip install --upgrade pip
+
+# Windows - 卸载包
+pip uninstall -y package_name
+```
+
+```bash
+# Ubuntu/WSL - 列出所有 conda 环境
+conda env list
+
+# Ubuntu/WSL - 查看当前环境的包
+conda list
+
+# Ubuntu/WSL - 升级 pip
+python -m pip install --upgrade pip
+
+# Ubuntu/WSL - 卸载包
+pip uninstall -y package_name
+```
+
 ## References
 
 - [YOLOv8 Ultralytics](https://github.com/ultralytics/ultralytics)
