@@ -589,4 +589,4 @@ This pipeline consolidates work from multiple open-source projects. Please refer
 ---
 
 **Last Updated**: 2026年4月30日
-**Maintainer**: YOLO Vision Pipeline Team
+**Maintainer**: VaporTang
