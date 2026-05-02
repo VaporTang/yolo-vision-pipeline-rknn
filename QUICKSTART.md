@@ -194,9 +194,7 @@ source rknn-env/bin/activate
 cp /mnt/c/path/to/models/best.onnx ./models/
 
 # 准备校准数据集（使用训练集图像）
-python src/dataset_tools.py prepare_calibration \
-    --image-dir /mnt/c/path/to/training/images \
-    --output datasets/calibration/dataset.txt
+python src/dataset_tools.py prepare_calibration --image-dir /mnt/c/path/to/training/images --output datasets/calibration/dataset.txt
 
 # 转换模型
 python src/export/2_onnx_to_rknn.py

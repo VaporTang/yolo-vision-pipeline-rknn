@@ -5,7 +5,7 @@
 set -e
 
 echo "╔══════════════════════════════════════════════════════════════╗"
-echo "║  YOLO Vision Pipeline RKNN - Ubuntu/WSL Setup               ║"
+echo "║  YOLO Vision Pipeline RKNN - Ubuntu/WSL Setup                ║"
 echo "╚══════════════════════════════════════════════════════════════╝"
 echo ""
 
@@ -13,6 +13,14 @@ echo "This script will set up the Python environment for:"
 echo "  1. RKNN model conversion from ONNX"
 echo "  2. INT8 quantization"
 echo ""
+
+# Choose a fast working directory on the WSL filesystem
+WORKDIR="${RKNN_WORKDIR:-$HOME/rknn-workdir}"
+if [[ "$PWD" == /mnt/* ]]; then
+    echo "Detected Windows-mounted path: $PWD"
+    echo "Using WSL workdir for faster IO: $WORKDIR"
+    mkdir -p "$WORKDIR"
+fi
 
 # Update system
 echo "Updating system packages..."
@@ -24,29 +32,35 @@ echo ""
 
 # Create virtual environment
 ENV_NAME="rknn-env"
-echo "Creating Python virtual environment: $ENV_NAME"
+ENV_DIR="$WORKDIR/$ENV_NAME"
+echo "Creating Python virtual environment: $ENV_DIR"
 
-if [ -d "$ENV_NAME" ]; then
+if [ -d "$ENV_DIR" ]; then
     echo "Environment already exists, skipping creation"
 else
-    python3 -m venv $ENV_NAME
+    python3 -m venv "$ENV_DIR"
 fi
 
-source $ENV_NAME/bin/activate
+source "$ENV_DIR/bin/activate"
 
 echo "✅ Virtual environment created and activated"
 echo ""
 
 # Prepare third-party directory
 echo "Preparing to download RKNN Toolkit2..."
-mkdir -p 3rdparty
-cd 3rdparty
+THIRD_PARTY_DIR="$WORKDIR/3rdparty"
+mkdir -p "$THIRD_PARTY_DIR"
+cd "$THIRD_PARTY_DIR"
 
 if [ ! -d "rknn-toolkit2" ]; then
-    echo "Cloning RKNN Toolkit2..."
-    git clone https://github.com/airockchip/rknn-toolkit2.git
+    echo "Cloning RKNN Toolkit2 (sparse checkout)..."
+    git clone --depth 1 --filter=blob:none --sparse https://github.com/airockchip/rknn-toolkit2.git
+    cd rknn-toolkit2
+    git sparse-checkout set rknn-toolkit2/packages/x86_64
 else
     echo "RKNN Toolkit2 already downloaded"
+    cd rknn-toolkit2
+    git sparse-checkout set rknn-toolkit2/packages/x86_64
 fi
 
 echo "✅ RKNN Toolkit2 ready"
@@ -54,7 +68,7 @@ echo ""
 
 # Install RKNN dependencies
 echo "Installing RKNN Toolkit2 dependencies..."
-cd rknn-toolkit2/rknn-toolkit2/packages/x86_64
+cd rknn-toolkit2/packages/x86_64
 
 if [ -f "requirements_cp310-2.3.2.txt" ]; then
     pip install -r requirements_cp310-2.3.2.txt
@@ -78,13 +92,13 @@ echo "✅ ONNX installed"
 echo ""
 
 echo "╔══════════════════════════════════════════════════════════════╗"
-echo "║  Setup Complete!                                            ║"
+echo "║  Setup Complete!                                             ║"
 echo "╚══════════════════════════════════════════════════════════════╝"
 echo ""
 
 echo "Next steps:"
 echo "  1. Activate the environment (in the future):"
-echo "     source $ENV_NAME/bin/activate"
+echo "     source $ENV_DIR/bin/activate"
 echo ""
 echo "  2. Prepare calibration dataset:"
 echo "     python src/dataset_tools.py prepare_calibration ..."

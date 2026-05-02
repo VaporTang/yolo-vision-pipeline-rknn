@@ -224,10 +224,13 @@ wsl --install -d Ubuntu-22.04
 # Inside Ubuntu/WSL
 cd /mnt/c/Users/YourUsername/Documents/GitHub/yolo-vision-pipeline-rknn
 
+# Optional: choose a fast workdir on the WSL filesystem
+export RKNN_WORKDIR=~/rknn-workdir
+
 bash setup_wsl.sh
 
-# Activate the environment
-source rknn-env/bin/activate
+# Activate the environment (created under RKNN_WORKDIR)
+source ~/rknn-workdir/rknn-env/bin/activate
 ```
 
 #### 3. Prepare Calibration Dataset
@@ -448,7 +451,7 @@ For more details, see [tools/anylabeling/README.md](tools/anylabeling/README.md)
 
 ```bash
 # In Ubuntu/WSL terminal
-source rknn-env/bin/activate
+source ~/rknn-workdir/rknn-env/bin/activate
 
 # Copy the ONNX model
 cp /mnt/c/path/to/models/best.onnx ./models/
@@ -496,13 +499,13 @@ conda env remove -n rknn-yolov8-train
 
 ```bash
 # Activate
-source rknn-env/bin/activate
+source ~/rknn-workdir/rknn-env/bin/activate
 
 # Deactivate
 deactivate
 
 # Remove (if needed)
-rm -rf rknn-env
+rm -rf ~/rknn-workdir/rknn-env
 ```
 
 ## Troubleshooting
@@ -520,7 +523,7 @@ $env:PYTHONPATH = ".\"
 **Solution**: Ensure you're running on WSL/Ubuntu and the environment is activated:
 
 ```bash
-source rknn-env/bin/activate
+source ~/rknn-workdir/rknn-env/bin/activate
 ```
 
 ### "ONNX model not found"
