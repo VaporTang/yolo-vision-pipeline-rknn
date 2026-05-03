@@ -222,19 +222,31 @@ def prepare_calibration_dataset(
     Prepare a calibration dataset list for RKNN quantization.
 
     Args:
-        image_dir: Directory containing calibration images
+        image_dir: Directory containing calibration images (supports recursive search)
         output_file: Output file path for dataset.txt
         num_images: Number of images to use (randomly selected)
     """
     image_path = Path(image_dir)
-    images = []
 
-    for ext in ["*.jpg", "*.png", "*.jpeg"]:
-        images.extend([img.name for img in image_path.glob(ext)])
+    if not image_path.exists():
+        print(f"Error: Image directory not found: {image_dir}")
+        return
+
+    # Recursively search for images in all subdirectories
+    images = []
+    for ext in ["*.jpg", "*.JPG", "*.png", "*.PNG", "*.jpeg", "*.JPEG"]:
+        images.extend(image_path.glob(f"**/{ext}"))
 
     if len(images) == 0:
-        print(f"Warning: No images found in {image_dir}")
+        print(f"Warning: No images found in {image_dir} or its subdirectories")
+        # Try to provide helpful suggestions
+        subdirs = [d for d in image_path.iterdir() if d.is_dir()]
+        if subdirs:
+            print(f"Available subdirectories: {', '.join([d.name for d in subdirs])}")
+            print(f"Tip: Try specifying one of these subdirectories directly")
         return
+
+    print(f"Found {len(images)} images in {image_dir}")
 
     # Randomly select images
     random.seed(42)
@@ -246,7 +258,10 @@ def prepare_calibration_dataset(
 
     with open(output_path, "w") as f:
         for img in selected:
-            f.write(f"{(image_path / img).resolve()}\n")
+            f.write(f"{img.resolve()}\n")
+
+    print(f"Created calibration dataset with {len(selected)} images")
+    print(f"Saved to: {output_file}")
 
     print(f"Created calibration dataset with {len(selected)} images")
     print(f"Saved to: {output_file}")
