@@ -121,6 +121,28 @@ python datasets/scripts/deduplicate.py --src datasets/raw --dst datasets/cleanin
 python datasets/scripts/deduplicate.py --src datasets/raw --dst datasets/cleaning/duplicates --gui --threshold 4
 ```
 
+### 从 raw 一步拆分到 yolo_dataset（推荐）
+
+清洗完成后，可以直接把 `datasets/raw` 中已配对的图片与标签按比例拆分到标准 YOLO 目录：
+
+```powershell
+# 先预览（不实际移动）
+python datasets/scripts/split_dataset.py --src datasets/raw --dst datasets/yolo_dataset --val-ratio 0.2 --seed 42 --dry-run
+
+# 确认后执行移动
+python datasets/scripts/split_dataset.py --src datasets/raw --dst datasets/yolo_dataset --val-ratio 0.2 --seed 42
+```
+
+默认会递归匹配 `datasets/raw/images` 与 `datasets/raw/labels` 的同名样本，并输出到：
+
+- `datasets/yolo_dataset/train/images` 与 `datasets/yolo_dataset/train/labels`
+- `datasets/yolo_dataset/valid/images` 与 `datasets/yolo_dataset/valid/labels`
+
+可选参数：
+
+- `--mode copy`：复制而不是移动
+- `--overwrite`：目标文件已存在时覆盖
+
 ## 第四步：训练模型（1到数小时不等）
 
 确保处于 `rknn-yolov8-train` 环境下：

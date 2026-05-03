@@ -388,6 +388,19 @@ python src/dataset_tools.py check_overlaps --json-dir path/to/annotations --thre
 python src/dataset_tools.py split_dataset --image-dir datasets/yolo_dataset/train/images --label-dir datasets/yolo_dataset/train/labels --val-ratio 0.2
 ```
 
+### 从 raw 一步拆分到 yolo_dataset（自动移动）
+
+```bash
+python datasets/scripts/split_dataset.py --src datasets/raw --dst datasets/yolo_dataset --val-ratio 0.2 --seed 42
+```
+
+默认行为会把 `datasets/raw/images` 与 `datasets/raw/labels` 下可配对的数据，按比例随机划分并移动到：
+
+- `datasets/yolo_dataset/train/images` + `datasets/yolo_dataset/train/labels`
+- `datasets/yolo_dataset/valid/images` + `datasets/yolo_dataset/valid/labels`
+
+如需仅预览不执行，可加 `--dry-run`；如需复制而非移动，可加 `--mode copy`。
+
 ### 移除未使用的类别
 
 ```bash
