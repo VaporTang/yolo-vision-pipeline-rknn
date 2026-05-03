@@ -269,7 +269,7 @@ python src/export/2_onnx_to_rknn.py --config configs/rknn_config.yaml
   python verify_paths.py
   ```
 
-2. **查看当前配置**：
+1. **查看当前配置**：
 
   ```powershell
   python src/train.py --show-paths
@@ -277,7 +277,7 @@ python src/export/2_onnx_to_rknn.py --config configs/rknn_config.yaml
 
    路径检查仅使用标准库，因此您可以在安装训练依赖项之前运行它。
 
-3. **自定义路径**（如果需要）：
+1. **自定义路径**（如果需要）：
   编辑 `configs/paths.yaml`：
 
   ```yaml
@@ -737,5 +737,5 @@ pip uninstall -y package_name
 
 ---
 
-**最后更新**：2026年4月30日
+**最后更新**：2026年5月3日
 **维护者**：VaporTang

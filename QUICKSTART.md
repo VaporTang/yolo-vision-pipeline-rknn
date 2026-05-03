@@ -13,12 +13,12 @@
 
 建议直接安装 Miniconda（比 Anaconda 更轻量，适合这个项目）：
 
-1. 打开官方页面：<https://www.anaconda.com/download/success?reg=skipped>
+1. 打开官方页面：[https://www.anaconda.com/download/success?reg=skipped](https://www.anaconda.com/download/success?reg=skipped)
 2. 下载 Miniconda Windows x86_64 安装包
 3. 运行安装程序，建议选择默认安装位置
-4. 不建议勾选 Add installation to my PATH environment variable
-5. 建议勾选 Register Miniconda3 as my default Python 3.13
-6. 建议勾选 Clear the package cache upon completion
+4. **不建议**勾选 *Add installation to my PATH environment variable*
+5. **建议**勾选 *Register Miniconda3 as my default Python 3.13*
+6. **建议**勾选 *Clear the package cache upon completion*
 7. 安装完成后，重新打开 PowerShell，并执行：
 
 ```powershell
@@ -41,13 +41,11 @@ conda init powershell
 # 自动检测（推荐）
 project_root: null
 
-# 或者手动指定 Windows 路径：
+# 或者手动指定 Windows 绝对路径：
 # project_root: C:\Users\YourUsername\Documents\GitHub\yolo-vision-pipeline-rknn
 ```
 
-这个路径检查命令不依赖训练环境，首次克隆后就可以直接运行。
-
-查看当前路径配置：
+这个路径检查命令不依赖训练环境，首次克隆后就可以直接运行，查看当前路径配置：
 
 ```powershell
 python src/train.py --show-paths
@@ -66,13 +64,13 @@ cd path/to/yolo-vision-pipeline-rknn
 conda activate rknn-yolov8-train
 ```
 
-脚本会分别创建三个环境：
+安装脚本会自动配置以下三个环境：
 
-- `rknn-yolov8-train`：官方 Ultralytics 源码安装，用于训练
-- `rknn-yolov8-export`：Rockchip Ultralytics 源码安装，用于 ONNX 导出
-- `x-anylabeling-cu12`：X-AnyLabeling 源码安装，用于 GPU 标注，默认 cu12
+- `rknn-yolov8-train`：官方 Ultralytics 源码安装，用于模型训练
+- `rknn-yolov8-export`：瑞芯微 (Rockchip) Ultralytics 源码安装，用于 ONNX 模型导出
+- `x-anylabeling-cu12`：X-AnyLabeling 源码安装，用于基于 GPU (CUDA 12) 的数据标注
 
-如果你需要用 X-AnyLabeling 做数据标注，可以在安装完成后切换到标注环境：
+如果你需要用 X-AnyLabeling 进行数据标注，可以在安装完成后随时切换到该环境：
 
 ```powershell
 conda activate x-anylabeling-cu12
@@ -81,34 +79,22 @@ xanylabeling
 
 ## 第二步补充：从视频抽帧（可选）
 
-如果你有录制的视频文件，可以使用抽帧工具从视频中自动提取帧图像。
-
-然后将视频放入 `datasets/videos/batch{N}/` 目录，使用以下命令抽帧：
+如果你有录制的视频文件，可以使用抽帧工具自动提取帧图像。将视频放入 `datasets/videos/batch{N}/` 目录，使用以下命令抽帧：
 
 ```powershell
-# 单个视频抽帧（每隔 30 帧取一帧）
-python datasets/scripts/extract_frames.py --video datasets/videos/batch1/recording.mp4 --output datasets/raw/images/batch1 --every 30
-
-# 或者批量抽帧（按目录，自动保留 batch 子目录结构）
+# 批量抽帧（按目录，自动保留 batch 子目录结构）
+# 默认递归查找 **/*.mp4 文件
 python datasets/scripts/extract_frames.py --video-dir datasets/videos --output datasets/raw/images --every 30
 
-# 自定义递归模式示例（例如只抽 avi）
-python datasets/scripts/extract_frames.py --video-dir datasets/videos --output datasets/raw/images --every 30 --pattern "**/*.avi"
+# 自定义递归模式示例（例如只抽 .avi 视频，每 15 帧抽 1 帧）
+python datasets/scripts/extract_frames.py --video-dir datasets/videos --output datasets/raw/images --every 15 --pattern "**/*.avi"
 ```
 
-参数说明：
-
-- `--every N`: 每隔 N 帧抽取 1 帧。若视频是 30fps，`--every 30` 表示每秒 1 帧；`--every 15` 表示每秒 2 帧。
-- `--batch-prefix`: 输出文件名前缀（可选）。设置后，单视频目录下输出为 `{batch_prefix}_{frame_id}`；同目录多视频时自动追加视频名避免重名。
-- `--pattern`: 查找视频的文件模式，默认 `**/*.mp4`（递归查找），也支持 `**/*.avi`、`**/*.mov` 等。
-
-批量模式会将 `datasets/videos/batch1/*.mp4` 输出到 `datasets/raw/images/batch1/`，`batch2` 同理。
-
-详见 `datasets/videos/README.md`。
+批量模式会将 `datasets/videos/batch1/*.mp4` 输出到 `datasets/raw/images/batch1/`，`batch2` 同理。详见 `datasets/videos/README.md`。
 
 ## 第三步：准备数据集（时间不定）
 
-你的数据集应当符合 YOLO 格式：
+你的数据集应当符合标准 YOLO 格式：
 
 ```text
 datasets/yolo_dataset/
@@ -120,83 +106,92 @@ datasets/yolo_dataset/
     └── labels/
 ```
 
-### 数据清洗（可选但推荐）
+### 数据清洗与去重（可选但强烈推荐）
 
-在将图片放入 `datasets/yolo_dataset` 前，建议先对原始数据进行清洗，去除高度重复或近似重复的图片以减少训练冗余。
-
-仓库提供了一个去重脚本：`datasets/scripts/deduplicate.py`，并附有使用说明 `datasets/cleaning/README.md`。
-
-#### 示例命令
+在将图片正式归入 `datasets/yolo_dataset` 前，建议先对原始数据进行清洗，去除高度重复的图片以减少训练冗余。
 
 ```powershell
-# 预览（不移动/复制）
+# 1. 预览重复项（Dry-run，不实际移动）
 python datasets/scripts/deduplicate.py --src datasets/raw --dst datasets/cleaning/duplicates --threshold 3 --workers 0 --dry-run
 
-# 确认后移动重复项
+# 2. 确认无误后，移动重复项进行隔离
 python datasets/scripts/deduplicate.py --src datasets/raw --dst datasets/cleaning/duplicates --threshold 3 --workers -4 --move
-```
 
-#### GUI 人工审核
-
-如果需要更直观地查看和管理重复图像，可以使用 GUI 模式：
-
-```powershell
+# 3. 启动 GUI 人工审核模式（按组预览和保留相似图片）
 python datasets/scripts/deduplicate.py --src datasets/raw --dst datasets/cleaning/duplicates --gui --threshold 4
 ```
 
-GUI 会将相似图分组显示，并支持选择保留图后按组导出（每组包含 images/ 和 labels/）。
+## 第四步：训练模型（1到数小时不等）
 
-#### 参数说明
-
-- `--threshold N`: 设置重复检测的敏感度，值越小越严格，GUI 模式下也支持此参数。
-- `--workers N`: 并行计算线程数，`0` 表示单线程，`-1` 表示使用 CPU 核心数减 1。
-- `--gui`: 启动图形界面模式，便于人工审核。
-
-## 第四步：训练模型（1到数小时不等，取决于数据量）
+确保处于 `rknn-yolov8-train` 环境下：
 
 ```powershell
+# 使用默认配置 (基于 configs/train_config.yaml)
 python src/train.py
+
+# 或通过命令行覆盖参数
+python src/train.py --epochs 300 --batch -1
 ```
 
-模型将被保存至 `models/best.pt`。
+训练完成后，最佳模型将被保存至 `models/best.pt`。
 
 ## 第五步：导出为 ONNX 格式（5-10分钟）
 
-先切换到导出环境：
+**注意：必须切换到专门的导出环境！**
 
 ```powershell
 conda activate rknn-yolov8-export
-```
 
-然后导出：
-
-```powershell
+# 设置环境变量确保路径被正确识别
 $env:PYTHONPATH = ".\"
-python src/export/1_pt_to_onnx.py
+
+# 执行导出
+python src/export/1_pt_to_onnx.py --purpose rknn
 ```
 
 输出文件：`models/best.onnx`
 
-## 第六步：转换为 RKNN 格式（在 Ubuntu/WSL 环境下，10-20分钟）
+### 💡 进阶：导出 X-Anylabeling AI 辅助标注模型（可选）
 
-### 仅限首次运行
+如果你希望用刚才训练好的模型，去自动标注未来的新数据：
 
-```bash
-cd /mnt/c/Users/你的用户名/path/to/yolo-vision-pipeline-rknn
-bash setup_wsl.sh
-source rknn-env/bin/activate
+```powershell
+# 切换回官方训练环境
+conda activate rknn-yolov8-train
+
+$env:PYTHONPATH = ".\"
+# 导出并简化模型，专供 X-Anylabeling 使用
+python src/export/1_pt_to_onnx.py --purpose anylabeling --input models/best.pt --output tools/anylabeling/models/detection.onnx --simplify
 ```
 
-### 随后运行
+然后在 X-Anylabeling 的 `菜单 -> AI 功能 -> 模型管理` 中加载 `detection.onnx` 即可实现一键自动标注。
+
+## 第六步：转换为 RKNN 格式（Ubuntu/WSL，10-20分钟）
+
+RKNN 模型转换必须在 Linux (x86_64) 环境下进行。
+
+### 首次运行环境初始化
 
 ```bash
-# 从 Windows 环境中复制 ONNX 文件
+# 在 Ubuntu/WSL 终端中执行
+cd /mnt/c/Users/你的用户名/path/to/yolo-vision-pipeline-rknn
+bash setup_wsl.sh
+source ~/rknn-workdir/rknn-env/bin/activate
+```
+
+### 执行转换
+
+```bash
+# 1. 确保在 WSL 的虚拟环境中
+source ~/rknn-workdir/rknn-env/bin/activate
+
+# 2. 从 Windows 环境中复制 ONNX 文件到当前 models 目录
 cp /mnt/c/path/to/models/best.onnx ./models/
 
-# 准备校准数据集（使用训练集图像）
-python src/dataset_tools.py prepare_calibration --image-dir /mnt/c/path/to/training/images --output datasets/calibration/dataset.txt
+# 3. 准备量化校准数据集（从训练集抽取 20-30 张代表性图像）
+python src/dataset_tools.py prepare_calibration --image-dir /mnt/c/path/to/training/images --output datasets/calibration/dataset.txt --num-images 20
 
-# 转换模型
+# 4. 转换模型为 RKNN 格式
 python src/export/2_onnx_to_rknn.py
 ```
 
@@ -204,66 +199,37 @@ python src/export/2_onnx_to_rknn.py
 
 ## 下一步做什么？
 
-- **部署**：将 `models/best.rknn` 复制到你的 RK3588 设备上
-- **优化**：在 `configs/train_config.yaml` 中调整模型大小或批次大小（batch size）
-- **改进**：添加更多训练数据或尝试不同的模型变体
-- **标注**：使用 `x-anylabeling-cu12` 环境启动 X-AnyLabeling 进行图像标注
+- **部署**：将生成的 `models/best.rknn` 复制并部署到你的 RK3588/RK3568 NPU 设备上。
+- **优化**：在 `configs/train_config.yaml` 中调整模型尺寸（如 yolov8n, yolov8s）或批次大小（batch size）。
+- **扩充**：收集更多数据，利用刚刚导出的 AI 辅助模型在 X-AnyLabeling 中快速标注，提升模型精度。
 
 ## 常见问题与故障排除
 
-| 问题 | 解决方案 |
-| --------- | ---------- |
-| `PYTHONPATH` 环境变量错误 | 运行 `$env:PYTHONPATH = ".\"` |
-| CUDA 显存不足 (out of memory) | 减小批次大小，例如：`--batch 8` |
-| 找不到 RKNN toolkit | 运行 `source rknn-env/bin/activate` |
+| 问题现象 | 解决方案 |
+| :--- | :--- |
+| `PYTHONPATH not set` (Windows) | 执行 `$env:PYTHONPATH = ".\"` |
+| CUDA Out of Memory (OOM) 内存不足 | 在训练命令中减小批次大小，例如追加参数：`--batch 8` 或 `--batch 4` |
+| RKNN toolkit not found (WSL) | 确保已激活正确的环境：`source ~/rknn-workdir/rknn-env/bin/activate` |
+| 转换时提示 PyYAML 缺失 (WSL) | 在 WSL 环境中执行：`pip install pyyaml` |
+| OOM (转换模型到 RKNN 时) | 在 `configs/rknn_config.yaml` 中将 `optimization_level` 改为 `1` |
 
-## 文件结构
+## 文件结构一览
 
 ```text
 yolo-vision-pipeline-rknn/
-├── configs/          ← 编辑这些 YAML 配置文件
-│   ├── data.yaml     ← 你的类别和数据集路径
-│   ├── train_config.yaml
-│   ├── export_config.yaml
-│   └── rknn_config.yaml
-├── datasets/         ← 将你的数据存放在这里
+├── configs/          ← 统一配置中心 (重点关注 data.yaml 和 rknn_config.yaml)
+├── datasets/         ← 数据集存放与处理目录
+│   ├── raw/
 │   ├── yolo_dataset/
 │   └── calibration/
-├── models/           ← 输出的模型保存在这里
-├── src/              ← 脚本文件（请勿编辑）
-│   ├── train.py
-│   ├── export/
-│   └── dataset_tools.py
-├── README.md         ← 完整文档
-├── setup_win.ps1
-└── setup_wsl.sh
-```
-
-## 常用命令
-
-```powershell
-# Windows - 训练
-python src/train.py --epochs 200
-
-# Windows - 导出
-$env:PYTHONPATH = ".\"
-python src/export/1_pt_to_onnx.py
-
-# Ubuntu/WSL - 准备校准数据
-python src/dataset_tools.py prepare_calibration \
-    --image-dir datasets/yolo_dataset/train/images \
-    --output datasets/calibration/dataset.txt
-
-# Ubuntu/WSL - 转换为 RKNN
-python src/export/2_onnx_to_rknn.py
+├── models/           ← 训练产出与导出的模型 (.pt, .onnx, .rknn)
+├── src/              ← 核心代码逻辑（通常无需修改）
+├── tools/            ← 扩展工具 (如 anylabeling)
+├── README.md         ← 完整功能说明书
+├── setup_win.ps1     ← Windows 一键安装包
+└── setup_wsl.sh      ← Linux/WSL 一键安装包
 ```
 
 ---
 
-**从零开始到生成 .rknn 文件的总耗时大约为 2-8 小时，具体取决于：**
-
-- 数据集的大小
-- 模型的复杂度
-- 硬件设备的运行速度
-
-如需了解更详细的信息，请参阅 [README.md](../README.md) 和 [docs/workflow.md](../docs/workflow.md)。
+⏱️ **总耗时预估**：从零开始到生成最终的 `.rknn` 文件，总耗时大约为 **2-8 小时**，主要取决于您的**数据集大小**、**模型复杂度**以及**显卡性能**。
