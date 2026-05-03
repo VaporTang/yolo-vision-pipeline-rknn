@@ -15,7 +15,7 @@ rknn_conversion:
   mean_values: [ [ 0, 0, 0 ] ]
   std_values: [ [ 255, 255, 255 ] ]
 
-  # Platform target (use one of: rk3588, rk3588s, rk3568, rk3566, rk3562)
+  # Platform target (use one of: rk3588(s), rk3568, rk3566, rk3562)
   target_platform: rk3588
 
   # Optimization
