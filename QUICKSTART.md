@@ -207,11 +207,11 @@ source ~/rknn-workdir/rknn-env/bin/activate
 # 1. 确保在 WSL 的虚拟环境中
 source ~/rknn-workdir/rknn-env/bin/activate
 
-# 2. 从 Windows 环境中复制 ONNX 文件到当前 models 目录
-cp /mnt/c/path/to/models/best.onnx ./models/
+# 2. 验证 ONNX 文件存在（无需复制，文件已在 ./models 目录中）
+ls -lh ./models/best.onnx
 
 # 3. 准备量化校准数据集（从训练集抽取 20-30 张代表性图像）
-python src/dataset_tools.py prepare_calibration --image-dir /mnt/c/path/to/training/images --output datasets/calibration/dataset.txt --num-images 20
+python src/dataset_tools.py prepare_calibration --image-dir datasets/yolo_dataset/train/images --output datasets/calibration/dataset.txt --num-images 20
 
 # 4. 转换模型为 RKNN 格式
 python src/export/2_onnx_to_rknn.py

@@ -98,6 +98,14 @@ def _resolve_path(value, project_root: Path):
     return project_root / path
 
 
+def _resolve_training_project(project_value, project_root: Path) -> Path:
+    """Resolve the Ultralytics project directory to an absolute path."""
+    if project_value is None:
+        return project_root / "models" / "training_results"
+
+    return _resolve_path(project_value, project_root)
+
+
 def _print_path_tree(data: dict, project_root: Path, indent: int = 0):
     prefix = "  " * indent
     for key, value in data.items():
@@ -188,6 +196,7 @@ def main():
 
     config = load_config(args.config)
     training_config = config.get("training", {})
+    project_root = _find_project_root(config_path)
 
     # Override with command line arguments
     if args.model:
@@ -222,7 +231,12 @@ def main():
         "device": training_config["device"],
         "workers": training_config.get("workers", 8),
         "patience": training_config.get("patience", 50),
-        "project": training_config.get("project", "models/training_results"),
+        "project": str(
+            _resolve_training_project(
+                training_config.get("project", "models/training_results"),
+                project_root,
+            )
+        ),
         "name": training_config.get("name", "yolo_train"),
         "save_period": training_config.get("save_period", 10),
         "close_mosaic": training_config.get("close_mosaic", 10),

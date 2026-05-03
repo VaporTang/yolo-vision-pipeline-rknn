@@ -10,7 +10,7 @@ training:
   device: 0 # GPU device ID (0 for first GPU, -1 for CPU)
   workers: 8 # Number of data loading workers
   patience: 50 # EarlyStopping patience
-  project: models/training_results # Save directory
+  project: 3rdparty/ultralytics/runs/detect/models/training_results # Save directory
   name: yolo_train # Experiment name
 
   # Advanced training settings (optional)

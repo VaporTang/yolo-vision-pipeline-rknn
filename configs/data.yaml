@@ -1,10 +1,10 @@
 # Dataset Configuration
-# Paths should be relative to the project root
-# Modify these paths based on your dataset location
+# Paths are resolved relative to the dataset root below.
+# Modify these paths based on your dataset location.
 
 path: datasets/yolo_dataset # Dataset root (images and labels dirs)
-train: datasets/yolo_dataset/train/images # Training images
-val: datasets/yolo_dataset/valid/images # Validation images
+train: train/images # Training images
+val: valid/images # Validation images
 test: # test images (optional)
 
 # Number of classes
