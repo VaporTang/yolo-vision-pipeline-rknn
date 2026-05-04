@@ -143,6 +143,13 @@ python datasets/scripts/split_dataset.py --src datasets/raw --dst datasets/yolo_
 - `--mode copy`：复制而不是移动
 - `--overwrite`：目标文件已存在时覆盖
 
+如果之后需要把已拆分的数据恢复回 `datasets/raw`，可以使用反向脚本：
+
+```powershell
+python datasets/scripts/merge_dataset.py --src datasets/yolo_dataset --dst datasets/raw --dry-run
+python datasets/scripts/merge_dataset.py --src datasets/yolo_dataset --dst datasets/raw
+```
+
 ## 第四步：训练模型（1到数小时不等）
 
 确保处于 `rknn-yolov8-train` 环境下：

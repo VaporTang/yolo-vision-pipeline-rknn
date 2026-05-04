@@ -410,6 +410,23 @@ python datasets/scripts/split_dataset.py --src datasets/raw --dst datasets/yolo_
 
 如需仅预览不执行，可加 `--dry-run`；如需复制而非移动，可加 `--mode copy`。
 
+### 反向合并回 raw
+
+如果你已经把数据拆到了 `datasets/yolo_dataset/train` 和 `datasets/yolo_dataset/valid`，可以用反向脚本把配对的图片和标签恢复回 `datasets/raw`：
+
+```powershell
+# 先预览
+python datasets/scripts/merge_dataset.py --src datasets/yolo_dataset --dst datasets/raw --dry-run
+
+# 确认后执行
+python datasets/scripts/merge_dataset.py --src datasets/yolo_dataset --dst datasets/raw
+```
+
+默认会把 `train/valid` 下的 `images/` 和 `labels/` 重新放回 `datasets/raw/images` 与 `datasets/raw/labels`，并保留原来的子目录结构。可选参数与拆分脚本一致：
+
+- `--mode copy`：复制而不是移动
+- `--overwrite`：目标文件已存在时覆盖
+
 ### 移除未使用的类别
 
 ```bash
