@@ -173,7 +173,14 @@ python src/export/1_pt_to_onnx.py --purpose rknn
 
 输出文件：`models/best.onnx`
 
-说明：RKNN 导出默认使用 opset 12，并禁用 onnxsim 简化，以避免图结构变化导致 NPU 端无框问题。
+说明：RKNN 导出默认使用 opset 12。`onnxsim` 是否启用由 `configs/export_config.yaml` 的 `simplify` 控制；也可通过命令行显式覆盖（`--simplify` / `--no-simplify`）。
+
+强制测试 RKNN + onnxsim：
+
+```powershell
+$env:PYTHONPATH = ".\"
+python src/export/1_pt_to_onnx.py --purpose rknn --simplify
+```
 
 ### 💡 进阶：导出 X-Anylabeling AI 辅助标注模型（可选）
 

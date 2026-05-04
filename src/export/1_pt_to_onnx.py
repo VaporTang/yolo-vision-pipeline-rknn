@@ -14,11 +14,15 @@ Requirements:
 Usage (Windows PowerShell):
     $env:PYTHONPATH = ".\"
     python src/export/1_pt_to_onnx.py --purpose rknn --config configs/export_config.yaml
+    python src/export/1_pt_to_onnx.py --purpose rknn --simplify
+    python src/export/1_pt_to_onnx.py --purpose rknn --no-simplify
     python src/export/1_pt_to_onnx.py --purpose anylabeling --input models/best.pt --output tools/anylabeling/models/detection.onnx
 
 Usage (Linux/WSL):
     export PYTHONPATH=./
     python src/export/1_pt_to_onnx.py --purpose rknn --config configs/export_config.yaml
+    python src/export/1_pt_to_onnx.py --purpose rknn --simplify
+    python src/export/1_pt_to_onnx.py --purpose rknn --no-simplify
 """
 
 import argparse
@@ -142,7 +146,7 @@ def main():
         "--simplify",
         action="store_true",
         default=None,
-        help="Simplify ONNX model using onnxsim",
+        help="Simplify ONNX model using onnxsim (for RKNN this is an explicit override)",
     )
     parser.add_argument(
         "--no-simplify",
@@ -232,17 +236,22 @@ def main():
         export_format = "onnx"
         opset_version = export_config.get("opset_version", 13)
         simplify = export_config.get("simplify", False)
+        simplify_cli = args.simplify is not None
 
         if purpose == "rknn" and backend == "rockchip":
             export_format = "rknn"
             if opset_version != 12:
                 print("WARNING: For Rockchip RKNN export, opset 12 is recommended.")
                 opset_version = 12
-            if simplify:
+            if simplify and not simplify_cli:
                 print(
                     "WARNING: Disabling onnxsim for RKNN export to avoid graph changes."
                 )
                 simplify = False
+            elif simplify and simplify_cli:
+                print(
+                    "WARNING: Forcing onnxsim for RKNN export; verify accuracy and outputs."
+                )
 
         export_kwargs = {
             "format": export_format,

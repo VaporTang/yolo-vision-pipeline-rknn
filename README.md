@@ -184,7 +184,14 @@ python src/export/1_pt_to_onnx.py --purpose rknn --config configs/export_config.
 
 输出文件：`models/best.onnx`
 
-说明：RKNN 导出默认使用 opset 12，并禁用 onnxsim 简化，以避免图结构变化导致 NPU 端无框问题。
+说明：RKNN 导出默认使用 opset 12。`onnxsim` 是否启用由 `configs/export_config.yaml` 的 `simplify` 控制；也可通过命令行显式覆盖（`--simplify` / `--no-simplify`）。
+
+如果要强制测试 RKNN + onnxsim：
+
+```powershell
+$env:PYTHONPATH = ".\"
+python src/export/1_pt_to_onnx.py --purpose rknn --simplify
+```
 
 #### 6. （可选）导出 ONNX 用于 X-Anylabeling AI 标注
 
@@ -357,8 +364,8 @@ onnx_export:
   purpose: rknn            # rknn 或 anylabeling
   strict_backend_check: true
   imgsz: 640
-  opset_version: 13
-  simplify: true             # 使用 onnxsim 进行优化
+  opset_version: 12
+  simplify: false            # 是否启用 onnxsim（可用命令行 --simplify 覆盖）
 ```
 
 ### `configs/rknn_config.yaml` - RKNN 转换配置
@@ -752,5 +759,5 @@ pip uninstall -y package_name
 
 ---
 
-**最后更新**：2026年5月3日
+**最后更新**：2026年5月4日
 **维护者**：VaporTang
