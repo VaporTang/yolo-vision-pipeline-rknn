@@ -184,6 +184,8 @@ python src/export/1_pt_to_onnx.py --purpose rknn --config configs/export_config.
 
 输出文件：`models/best.onnx`
 
+说明：RKNN 导出默认使用 opset 12，并禁用 onnxsim 简化，以避免图结构变化导致 NPU 端无框问题。
+
 #### 6. （可选）导出 ONNX 用于 X-Anylabeling AI 标注
 
 如果您希望在数据标注时使用 X-Anylabeling 进行 AI 辅助标注，请将模型导出至 anylabeling 工具目录：

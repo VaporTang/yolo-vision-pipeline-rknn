@@ -173,6 +173,8 @@ python src/export/1_pt_to_onnx.py --purpose rknn
 
 输出文件：`models/best.onnx`
 
+说明：RKNN 导出默认使用 opset 12，并禁用 onnxsim 简化，以避免图结构变化导致 NPU 端无框问题。
+
 ### 💡 进阶：导出 X-Anylabeling AI 辅助标注模型（可选）
 
 如果你希望用刚才训练好的模型，去自动标注未来的新数据：
@@ -196,7 +198,7 @@ RKNN 模型转换必须在 Linux (x86_64) 环境下进行。
 
 ```bash
 # 在 Ubuntu/WSL 终端中执行
-cd /mnt/c/Users/你的用户名/path/to/yolo-vision-pipeline-rknn
+cd /mnt/c/Users/你的用户名/Documents/GitHub/yolo-vision-pipeline-rknn
 bash setup_wsl.sh
 source ~/rknn-workdir/rknn-env/bin/activate
 ```

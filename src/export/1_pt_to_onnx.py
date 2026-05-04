@@ -229,11 +229,26 @@ def main():
     # Export to ONNX
     print(f"\n2. Exporting to ONNX format...")
     try:
+        export_format = "onnx"
+        opset_version = export_config.get("opset_version", 13)
+        simplify = export_config.get("simplify", False)
+
+        if purpose == "rknn" and backend == "rockchip":
+            export_format = "rknn"
+            if opset_version != 12:
+                print("WARNING: For Rockchip RKNN export, opset 12 is recommended.")
+                opset_version = 12
+            if simplify:
+                print(
+                    "WARNING: Disabling onnxsim for RKNN export to avoid graph changes."
+                )
+                simplify = False
+
         export_kwargs = {
-            "format": "onnx",
+            "format": export_format,
             "imgsz": export_config.get("imgsz", 640),
             "device": export_config.get("device", 0),
-            "opset": export_config.get("opset_version", 13),
+            "opset": opset_version,
             "batch": 1,
             "simplify": False,
         }
@@ -261,7 +276,7 @@ def main():
             print(f"   Size: {file_size_mb:.2f} MB")
 
         # Optional: Simplify ONNX model
-        if export_config.get("simplify", False):
+        if simplify:
             print(f"\n3. Simplifying ONNX model...")
             try:
                 import onnxsim

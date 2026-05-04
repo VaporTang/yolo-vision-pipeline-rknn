@@ -20,8 +20,8 @@ onnx_export:
   imgsz: 640 # Input image size
 
   # ONNX export options
-  opset_version: 13 # ONNX opset version
-  simplify: true # Simplify ONNX model using onnxsim
+  opset_version: 12 # ONNX opset version (recommended for RKNN)
+  simplify: false # Avoid onnxsim for RKNN export stability
 
   # Format options
   format: onnx
