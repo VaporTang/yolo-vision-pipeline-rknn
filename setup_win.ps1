@@ -1,4 +1,4 @@
-# YOLO Vision Pipeline - Windows Setup Script
+﻿# YOLO Vision Pipeline - Windows Setup Script
 # 此脚本用于配置 YOLOv8 训练和 ONNX 导出的 Conda 环境
 
 $ErrorActionPreference = 'Stop'
