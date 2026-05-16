@@ -184,9 +184,9 @@ try {
     if ($LASTEXITCODE -ne 0) { Fail "Failed to install NVIDIA CUDA packages in '$labelEnvName' (exit $LASTEXITCODE)" }
 
     Write-Host "  Extracting NVIDIA DLLs to Conda Library/bin..." -ForegroundColor Cyan
-    $envPath = & conda run -n $labelEnvName --no-capture-output python -c "import sys; print(sys.prefix)"
-    $nvidiaDir = Join-Path $envPath "Lib" "site-packages" "nvidia"
-    $targetDir = Join-Path $envPath "Library" "bin"
+    $envPath = (& conda run -n $labelEnvName --no-capture-output python -c "import sys; print(sys.prefix)").Trim()
+    $nvidiaDir = Join-Path $envPath "Lib\site-packages\nvidia"
+    $targetDir = Join-Path $envPath "Library\bin"
 
     if (Test-Path $nvidiaDir) {
         if (-not (Test-Path $targetDir)) {
