@@ -5,6 +5,7 @@
 ![Python](https://img.shields.io/badge/Python-3.10+-blue)
 ![YOLOv8](https://img.shields.io/badge/YOLOv8-Latest-green)
 ![Status](https://img.shields.io/badge/Status-Active-brightgreen)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 
 ## 概述
 
